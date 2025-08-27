@@ -1,0 +1,48 @@
+
+# اطلاعات کلی سایت (می‌تواند فارسی باشد)
+site_name: مستندات وب‌کشت
+site_url: https://example.com/
+site_description: 'مستندات جامع برای محصولات و خدمات وب‌کشت'
+site_author: 'تیم وب‌کشت'
+
+# مسیر خروجی build را به پوشه /fa تغییر می‌دهیم
+# این مهم‌ترین بخش است!
+site_dir: site/fa
+
+# تنظیمات پوسته برای زبان فارسی
+theme:
+  name: material
+  language: fa  # <--- زبان فارسی برای فعال‌سازی RTL
+  custom_dir: overrides
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.top
+    - navigation.footer
+
+    - search.highlight
+    #- content.code.annotate
+    #- content.tabs.link
+  font:
+    text: Vazirmatn
+    code: Roboto Mono
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: تغییر به حالت تاریک
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: تغییر به حالت روشن
+
+
+
+extra_css:
+  - stylesheets/custom.css
+
+plugins:
+  - search
+  - blog
+  - meta:
+       meta_file: .meta.yml
