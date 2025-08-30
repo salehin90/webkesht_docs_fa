@@ -20,12 +20,15 @@ jobs:
           Write-Host "=== Environment Check ==="
           Set-Location "${{ github.workspace }}"
           Write-Host "Current directory: $(Get-Location)"
+          
           Write-Host "`n=== File Structure ==="
           Get-ChildItem -Recurse | Select-Object FullName | Format-Table -AutoSize
+          
           Write-Host "`n=== MkDocs Configuration Content ==="
           $configContent = Get-Content -Path "mkdocs.yml" -Encoding UTF8
           Write-Host "Configuration file content:"
           $configContent | ForEach-Object { Write-Host "  $_" }
+          
           Write-Host "`n=== Testing Basic MkDocs Commands ==="
           try {
             Write-Host "Testing mkdocs help:"
@@ -36,15 +39,15 @@ jobs:
           
           Write-Host "`n=== Testing Python YAML parsing ==="
           $yamlTestScript = @'
-               import yaml
-               import sys
-               sys.stdout.reconfigure(encoding='utf-8')
-               with open('mkdocs.yml', 'r', encoding='utf-8') as f:
-               config = yaml.safe_load(f)
-               print('YAML parsing successful!')
-               print('Site name:', config.get('site_name', 'Not found'))
-              print('Theme name:', config.get('theme', {}).get('name', 'Not found'))
-               '@
+import yaml
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+with open('mkdocs.yml', 'r', encoding='utf-8') as f:
+    config = yaml.safe_load(f)
+    print('YAML parsing successful!')
+    print('Site name:', config.get('site_name', 'Not found'))
+    print('Theme name:', config.get('theme', {}).get('name', 'Not found'))
+'@
           
           try {
             python -c $yamlTestScript 2>&1 | ForEach-Object { Write-Host $_ }
@@ -54,10 +57,10 @@ jobs:
           
           Write-Host "`n=== Creating Minimal Test Configuration ==="
           $minimalConfig = @"
-          site_name: Test Site
-          theme:
-          name: material
-          "@
+site_name: Test Site
+theme:
+  name: material
+"@
           $minimalConfig | Out-File -FilePath "mkdocs_test.yml" -Encoding UTF8
           
           Write-Host "Testing with minimal configuration:"
@@ -70,9 +73,9 @@ jobs:
             Write-Host "Minimal config test failed: $($_.Exception.Message)"
           }
 
-          - name: Test Original Configuration
-            shell: powershell
-            run: |
+      - name: Test Original Configuration
+        shell: powershell
+        run: |
           Set-Location "${{ github.workspace }}"
           
           Write-Host "=== Checking Required Directories ==="
