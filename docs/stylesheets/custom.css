@@ -1,3 +1,303 @@
 [dir="rtl"] .md-content__inner p {
   text-align: justify;
 }
+/* RTL Support and Typography */
+body, .md-typeset {
+  font-family: 'Vazirmatn', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Hero Section - RTL Compatible */
+.hero-section {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #3f51b5, #2196f3);
+  color: white;
+  border-radius: 12px;
+  margin: 1rem 0 3rem 0;
+  box-shadow: 0 8px 32px rgba(63, 81, 181, 0.3);
+}
+
+.hero-section h1 {
+  font-size: 2.8rem;
+  margin-bottom: 1.5rem;
+  color: white;
+  font-weight: 700;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hero-subtitle {
+  font-size: 1.4rem;
+  margin-bottom: 2.5rem;
+  opacity: 0.95;
+  font-weight: 400;
+  line-height: 1.6;
+}
+
+.hero-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.hero-actions .md-button {
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.hero-actions .md-button--primary {
+  background: rgba(255, 255, 255, 0.2);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.hero-actions .md-button--primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.hero-actions .md-button:not(.md-button--primary) {
+  background: rgba(255, 255, 255, 0.9);
+  color: #3f51b5;
+  border: 2px solid transparent;
+}
+
+.hero-actions .md-button:not(.md-button--primary):hover {
+  background: white;
+  transform: translateY(-2px);
+}
+
+/* Grid Cards Enhancement */
+.md-typeset .grid.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.md-typeset .grid.cards > * {
+  background: var(--md-default-bg-color);
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 12px;
+  padding: 2rem;
+  transition: all 0.3s ease;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.md-typeset .grid.cards > *:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+  border-color: var(--md-primary-fg-color--light);
+}
+
+.md-typeset .grid.cards > * h4 {
+  color: var(--md-primary-fg-color);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.md-typeset .grid.cards > * .twemoji {
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+/* Workflow Steps */
+.workflow-steps {
+  margin: 2rem 0;
+}
+
+.workflow-steps h3 {
+  color: var(--md-primary-fg-color);
+  border-right: 4px solid var(--md-primary-fg-color);
+  padding-right: 1rem;
+  margin: 2rem 0 1rem 0;
+  font-weight: 600;
+  position: relative;
+}
+
+.workflow-steps h3::before {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  background: var(--md-primary-fg-color);
+  border-radius: 50%;
+}
+
+/* Benefits Grid */
+.benefits-grid .admonition {
+  margin: 1.5rem 0;
+  border-radius: 8px;
+}
+
+.benefits-grid .admonition-title {
+  font-weight: 600;
+}
+
+/* Quick Start Links */
+.quick-start-links {
+  counter-reset: step-counter;
+  margin: 2rem 0;
+}
+
+.quick-start-links li {
+  counter-increment: step-counter;
+  position: relative;
+  padding-right: 4rem;
+  margin: 1.5rem 0;
+  list-style: none;
+}
+
+.quick-start-links li::before {
+  content: counter(step-counter);
+  position: absolute;
+  right: 0;
+  top: 0;
+  background: linear-gradient(135deg, var(--md-primary-fg-color), var(--md-accent-fg-color));
+  color: white;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.quick-start-links li strong {
+  color: var(--md-primary-fg-color);
+}
+
+/* Footer CTA */
+.footer-cta {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, var(--md-default-bg-color), var(--md-code-bg-color));
+  border-radius: 12px;
+  margin-top: 3rem;
+  border: 2px solid var(--md-default-fg-color--lightest);
+}
+
+.footer-cta h3 {
+  color: var(--md-primary-fg-color);
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.footer-cta p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  opacity: 0.8;
+}
+
+/* Button Enhancements */
+.md-button--stretch {
+  width: 100%;
+  max-width: 320px;
+  padding: 16px 32px;
+  font-size: 1.2rem;
+  border-radius: 8px;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+/* Section Separators */
+.md-typeset hr {
+  border: none;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--md-default-fg-color--lightest), transparent);
+  margin: 3rem 0;
+}
+
+/* Icons Enhancement */
+.md-typeset .twemoji {
+  vertical-align: -0.125em;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .hero-section {
+    padding: 2rem 1rem;
+    margin: 0.5rem 0 2rem 0;
+  }
+  
+  .hero-section h1 {
+    font-size: 2.2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.2rem;
+  }
+  
+  .hero-actions {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+  
+  .hero-actions .md-button {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .md-typeset .grid.cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .workflow-steps h3 {
+    font-size: 1.3rem;
+  }
+  
+  .quick-start-links li {
+    padding-right: 3rem;
+  }
+  
+  .quick-start-links li::before {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .hero-section h1 {
+    font-size: 1.8rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .footer-cta h3 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Dark mode adjustments */
+[data-md-color-scheme="slate"] .hero-section {
+  background: linear-gradient(135deg, #2e3440, #3b4252);
+}
+
+[data-md-color-scheme="slate"] .md-typeset .grid.cards > * {
+  background: var(--md-code-bg-color);
+  border-color: var(--md-default-fg-color--lightest);
+}
+
+[data-md-color-scheme="slate"] .footer-cta {
+  background: linear-gradient(135deg, var(--md-code-bg-color), var(--md-default-bg-color));
+}

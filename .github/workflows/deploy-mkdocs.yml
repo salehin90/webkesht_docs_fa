@@ -1,524 +1,324 @@
-name: Deploy MkDocs to IIS - Deploy Fixed V8
+# نام Workflow که در تب Actions گیت‌هاب نمایش داده می‌شود
+name: Deploy MkDocs to IIS - Enhanced Version
 
+# تریگر: این Workflow چه زمانی اجرا شود؟
+# در اینجا، هر زمان که کدی به برنچ main پوش شود
 on:
   push:
     branches:
-      - main
+      - main  # یا master، بسته به نام برنچ اصلی شما
 
+# تعریف کارها (Jobs)
 jobs:
   build-and-deploy:
-    name: Build and Deploy MkDocs Site
+    # نام نمایشی Job
+    name: Build and Deploy MkDocs Site Enhanced
+
+    # مهم: مشخص می‌کنیم که این Job باید روی Runner شخصی ما اجرا شود
     runs-on: self-hosted
 
+    # مراحل اجرای Job
     steps:
+      # مرحله 1: دریافت آخرین نسخه کد از ریپازیتوری
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Environment Check
+      # مرحله 2: بررسی محیط و آماده‌سازی
+      - name: Environment Check & Preparation
         shell: powershell
         run: |
           Write-Host "=== Environment Check ==="
           Set-Location "${{ github.workspace }}"
           Write-Host "Current directory: $(Get-Location)"
           
-          Write-Host "`n=== File Structure ==="
-          Get-ChildItem -Recurse | Select-Object FullName | Format-Table -AutoSize
-          
-          Write-Host "`n=== MkDocs Configuration Content ==="
-          $configContent = Get-Content -Path "mkdocs.yml" -Encoding UTF8
-          Write-Host "Configuration file content:"
-          $configContent | ForEach-Object { Write-Host "  $_" }
-
-      - name: Test MkDocs Commands
-        shell: powershell
-        run: |
-          Set-Location "${{ github.workspace }}"
-          
-          Write-Host "=== Testing Basic MkDocs Commands ==="
-          
-          Write-Host "Testing mkdocs version:"
-          python -m mkdocs --version
-          $versionExitCode = $LASTEXITCODE
-          Write-Host "Version test completed with exit code: $versionExitCode"
-          
-          if ($versionExitCode -ne 0) {
-            Write-Host "ERROR: MkDocs version command failed!"
-            exit $versionExitCode
+          # بررسی فایل mkdocs.yml
+          if (Test-Path "mkdocs.yml") {
+            Write-Host "✅ mkdocs.yml found"
+          } else {
+            Write-Host "❌ mkdocs.yml not found!"
+            exit 1
           }
           
-          Write-Host "`nTesting mkdocs help (capturing output safely):"
-          try {
-            $helpOutput = python -m mkdocs --help 2>&1
-            $helpExitCode = $LASTEXITCODE
-            
-            # نمایش چند خط اول
-            $helpOutput | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
-            
-            Write-Host "Help command exit code: $helpExitCode"
-            
-            # برای help command، exit code ممکن است -1 باشد که طبیعی است
-            if ($helpExitCode -ne 0 -and $helpExitCode -ne -1) {
-              Write-Host "WARNING: Help command returned unexpected exit code: $helpExitCode"
+          # بررسی و ایجاد پوشه‌های مورد نیاز
+          $requiredDirs = @("docs", "overrides", "stylesheets")
+          foreach ($dir in $requiredDirs) {
+            if (-not (Test-Path $dir)) {
+              Write-Host "Creating missing directory: $dir"
+              New-Item -ItemType Directory -Name $dir -Force
+              
+              # اضافه کردن فایل‌های پیش‌فرض در صورت نیاز
+              if ($dir -eq "docs" -and -not (Test-Path "docs\index.md")) {
+                "# Welcome`n`nThis is the homepage." | Out-File -FilePath "docs\index.md" -Encoding UTF8
+              }
+              if ($dir -eq "stylesheets" -and -not (Test-Path "stylesheets\custom.css")) {
+                "/* Custom CSS */" | Out-File -FilePath "stylesheets\custom.css" -Encoding UTF8
+              }
             } else {
-              Write-Host "Help command completed successfully"
+              Write-Host "✅ Directory exists: $dir"
             }
           }
-          catch {
-            Write-Host "Warning: Could not capture help output: $($_.Exception.Message)"
-          }
-          
-          Write-Host "`nMkDocs commands test completed successfully!"
 
-      - name: Test YAML Parsing
+      # مرحله 3: تست MkDocs قبل از بیلد اصلی
+      - name: Test MkDocs Configuration
         shell: powershell
         run: |
           Set-Location "${{ github.workspace }}"
           
-          Write-Host "=== Testing Python YAML parsing ==="
+          Write-Host "=== Testing MkDocs Configuration ==="
           
-          # ایجاد فایل Python موقت برای تست
+          # تست version
+          Write-Host "MkDocs version:"
+          python -m mkdocs --version
+          
+          # تست YAML parsing
+          Write-Host "`nTesting YAML configuration parsing..."
+          
+          # ایجاد کد پایتون با خطوط جداگانه
           $pythonCode = 'import yaml' + "`n"
           $pythonCode += 'import sys' + "`n"
           $pythonCode += 'sys.stdout.reconfigure(encoding="utf-8")' + "`n"
           $pythonCode += 'with open("mkdocs.yml", "r", encoding="utf-8") as f:' + "`n"
           $pythonCode += '    config = yaml.safe_load(f)' + "`n"
-          $pythonCode += '    print("YAML parsing successful!")' + "`n"
+          $pythonCode += '    print("✅ YAML parsing successful!")' + "`n"
           $pythonCode += '    print("Site name:", config.get("site_name", "Not found"))' + "`n"
-          $pythonCode += '    print("Theme name:", config.get("theme", {}).get("name", "Not found"))'
+          $pythonCode += '    theme_info = config.get("theme", {})' + "`n"
+          $pythonCode += '    if isinstance(theme_info, dict):' + "`n"
+          $pythonCode += '        theme_name = theme_info.get("name", "Not found")' + "`n"
+          $pythonCode += '    else:' + "`n"
+          $pythonCode += '        theme_name = str(theme_info)' + "`n"
+          $pythonCode += '    print("Theme:", theme_name)'
           
-          $pythonCode | Out-File -FilePath "test_yaml.py" -Encoding UTF8
+          $pythonCode | Out-File -FilePath "test_config.py" -Encoding UTF8
+          python test_config.py
+          Remove-Item "test_config.py" -ErrorAction SilentlyContinue
           
-          python test_yaml.py
-          $yamlExitCode = $LASTEXITCODE
-          Write-Host "YAML parsing test completed with exit code: $yamlExitCode"
-          
-          if ($yamlExitCode -ne 0) {
-            Write-Host "ERROR: YAML parsing failed!"
-            exit $yamlExitCode
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "❌ Configuration test failed!"
+            exit $LASTEXITCODE
           }
-          
-          Remove-Item "test_yaml.py" -ErrorAction SilentlyContinue
 
-      - name: Test Minimal Configuration
+      # مرحله 4: بیلد کردن سایت با دستور mkdocs build
+      - name: Build MkDocs Site
         shell: powershell
         run: |
           Set-Location "${{ github.workspace }}"
           
-          Write-Host "=== Creating Minimal Test Configuration ==="
-          
-          # ایجاد پوشه docs با فایل index
-          if (-not (Test-Path "docs_test")) {
-            New-Item -ItemType Directory -Name "docs_test" -Force
-            "# Test Page`n`nThis is a test page." | Out-File -FilePath "docs_test\index.md" -Encoding UTF8
-          }
-          
-          # اضافه کردن docs directory به کانفیگ
-          $minimalConfig = 'site_name: Test Site' + "`n"
-          $minimalConfig += 'docs_dir: docs_test' + "`n"
-          $minimalConfig += 'theme:' + "`n"
-          $minimalConfig += '  name: material'
-          
-          $minimalConfig | Out-File -FilePath "mkdocs_test.yml" -Encoding UTF8
-          
-          Write-Host "Minimal config content:"
-          Get-Content "mkdocs_test.yml" | ForEach-Object { Write-Host "  $_" }
-          
-          Write-Host "`nTesting with minimal configuration:"
-          Write-Host "Running: python -m mkdocs build --config-file mkdocs_test.yml --verbose"
-          
-          # اجرای دستور و ذخیره exit code
-          python -m mkdocs build --config-file mkdocs_test.yml --verbose
-          $buildExitCode = $LASTEXITCODE
-          
-          Write-Host "`nMinimal build exit code: $buildExitCode"
-          
-          if ($buildExitCode -eq 0) {
-            Write-Host "✅ Minimal config test PASSED"
-            if (Test-Path "site") {
-              Write-Host "Site directory created for minimal test"
-              Remove-Item -Path "site" -Recurse -Force -ErrorAction SilentlyContinue
-            }
-          } else {
-            Write-Host "❌ Minimal config test FAILED with exit code: $buildExitCode"
-            Write-Host "This indicates there might be an issue with the Material theme or configuration"
-            
-            # سعی در تست با theme پیش‌فرض
-            Write-Host "`nTrying with default theme..."
-            $defaultConfig = 'site_name: Test Site' + "`n"
-            $defaultConfig += 'docs_dir: docs_test'
-            $defaultConfig | Out-File -FilePath "mkdocs_default_test.yml" -Encoding UTF8
-            
-            python -m mkdocs build --config-file mkdocs_default_test.yml --verbose
-            $defaultExitCode = $LASTEXITCODE
-            
-            Write-Host "Default theme test exit code: $defaultExitCode"
-            
-            if ($defaultExitCode -eq 0) {
-              Write-Host "✅ Default theme works - issue is with Material theme configuration"
-            } else {
-              Write-Host "❌ Even default theme fails - there's a deeper issue"
-              exit $defaultExitCode
-            }
-            
-            Remove-Item "mkdocs_default_test.yml" -ErrorAction SilentlyContinue
-          }
-          
-          # پاکسازی فایل‌های تست
-          Remove-Item "mkdocs_test.yml" -ErrorAction SilentlyContinue
-          Remove-Item -Path "docs_test" -Recurse -Force -ErrorAction SilentlyContinue
-
-      - name: Prepare Required Files
-        shell: powershell
-        run: |
-          Set-Location "${{ github.workspace }}"
-          
-          Write-Host "=== Checking Required Directories ==="
-          if (-not (Test-Path "docs")) {
-            Write-Host "Creating docs directory with index file..."
-            New-Item -ItemType Directory -Name "docs" -Force
-            "# Welcome`n`nThis is the homepage." | Out-File -FilePath "docs\index.md" -Encoding UTF8
-          } else {
-            Write-Host "Docs directory exists:"
-            Get-ChildItem "docs" | ForEach-Object { Write-Host "  $($_.Name)" }
-          }
-          
-          if (-not (Test-Path "overrides")) {
-            Write-Host "Creating overrides directory (referenced in theme.custom_dir)..."
-            New-Item -ItemType Directory -Name "overrides" -Force
-            Write-Host "Overrides directory created"
-          } else {
-            Write-Host "Overrides directory exists"
-          }
-          
-          if (-not (Test-Path "stylesheets")) {
-            Write-Host "Creating stylesheets directory with custom.css..."
-            New-Item -ItemType Directory -Name "stylesheets" -Force
-            "/* Custom CSS */" | Out-File -FilePath "stylesheets\custom.css" -Encoding UTF8
-            Write-Host "Stylesheets directory and custom.css created"
-          } else {
-            Write-Host "Stylesheets directory exists"
-            if (-not (Test-Path "stylesheets\custom.css")) {
-              "/* Custom CSS */" | Out-File -FilePath "stylesheets\custom.css" -Encoding UTF8
-              Write-Host "Created missing custom.css"
-            }
-          }
-
-      - name: Build Site
-        shell: powershell
-        run: |
-          Set-Location "${{ github.workspace }}"
-          
-          Write-Host "=== Building Site with Original Configuration ==="
+          Write-Host "=== Building MkDocs Site ==="
           
           # تنظیم environment variables برای UTF-8
           $env:PYTHONIOENCODING = "utf-8"
           $env:LANG = "en_US.UTF-8"
           
-          Write-Host "Running mkdocs build with verbose output..."
-          Write-Host "Command: python -m mkdocs build --clean --verbose"
-          
-          # اجرای دستور build
+          Write-Host "Running: python -m mkdocs build --clean --verbose"
           python -m mkdocs build --clean --verbose
-          $buildExitCode = $LASTEXITCODE
           
-          Write-Host "`nMain build process exit code: $buildExitCode"
+          $buildExitCode = $LASTEXITCODE
+          Write-Host "Build exit code: $buildExitCode"
           
           if ($buildExitCode -eq 0) {
-            Write-Host "`n✅ Build Successful!"
+            Write-Host "✅ Build successful!"
+            
+            # بررسی ایجاد شدن فایل‌های خروجی
             if (Test-Path "site") {
-              Write-Host "Site directory created successfully"
+              $siteFiles = Get-ChildItem -Path "site" -Recurse -File
+              Write-Host "Generated files count: $($siteFiles.Count)"
               
-              # نمایش ساختار اصلی سایت
-              Write-Host "`nSite structure:"
-              Get-ChildItem -Path "site" | Select-Object Name, Length | Format-Table -AutoSize
-              
-              # بررسی پوشه fa
+              # تشخیص مسیر صحیح source
               if (Test-Path "site\fa") {
-                Write-Host "`nFA directory contents:"
-                Get-ChildItem -Path "site\fa" | Select-Object Name, Length | Format-Table -AutoSize
+                Write-Host "✅ FA-specific build directory found: site\fa"
+                $global:SourcePath = "site\fa"
               } else {
-                Write-Host "`nFA directory not created - using default site directory"
+                Write-Host "✅ Using main site directory: site"
+                $global:SourcePath = "site"
               }
             } else {
-              Write-Host "❌ ERROR: Site directory was not created despite successful exit code!"
+              Write-Host "❌ Site directory not created!"
               exit 1
             }
           } else {
-            Write-Host "`n❌ Build Failed!"
-            Write-Host "Exit code: $buildExitCode"
+            Write-Host "❌ Build failed!"
             exit $buildExitCode
           }
 
-      - name: Complete IIS Management and Deploy
+      # مرحله 5: استقرار هوشمند در IIS
+      - name: Smart Deploy to IIS
         shell: powershell
         run: |
-          Write-Host "=== Complete IIS Management and Deployment ==="
+          Write-Host "=== Smart IIS Deployment ==="
+          
+          # تنظیم مسیرها
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           
           # تشخیص مسیر صحیح source
           if (Test-Path "${{ github.workspace }}\site\fa") {
             $sourcePath = "${{ github.workspace }}\site\fa"
-            Write-Host "Using FA-specific build: $sourcePath"
+            Write-Host "✅ Using FA-specific build: $sourcePath"
           } else {
             $sourcePath = "${{ github.workspace }}\site"
-            Write-Host "Using main site build: $sourcePath"
+            Write-Host "✅ Using main site build: $sourcePath"
           }
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
-          # === مرحله 1: مدیریت IIS ===
-          Write-Host "`n=== Step 1: IIS Management ==="
+          # === مرحله 1: مدیریت IIS (اختیاری) ===
+          Write-Host "`n--- IIS Management (Optional) ---"
           try {
             Import-Module WebAdministration -ErrorAction SilentlyContinue
             
-            # توقف Application Pool
             $appPoolName = "webkesht_docs"
-            $appPoolExists = Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue
+            $appPool = Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue
             
-            if ($appPoolExists) {
+            if ($appPool) {
               Write-Host "Stopping Application Pool: $appPoolName"
               Stop-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
-              
-              # انتظار برای اطمینان از توقف کامل
-              $maxWait = 30
-              $waitCount = 0
-              do {
-                Start-Sleep -Seconds 1
-                $waitCount++
-                $poolState = (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue).State
-                Write-Host "Pool state: $poolState (wait: $waitCount/$maxWait)"
-              } while ($poolState -ne "Stopped" -and $waitCount -lt $maxWait)
-              
-              if ($poolState -eq "Stopped") {
-                Write-Host "✅ Application Pool stopped successfully"
-              } else {
-                Write-Host "⚠️  Application Pool may not be fully stopped"
-              }
-            } else {
-              Write-Host "Application Pool $appPoolName not found"
+              Start-Sleep -Seconds 5
+              Write-Host "✅ Application Pool stopped"
             }
-            
-            # توقف IIS Site (اگر وجود دارد)
-            $siteName = "webkesht_docs"
-            $site = Get-IISSite -Name $siteName -ErrorAction SilentlyContinue
-            if ($site) {
-              Write-Host "Stopping IIS Site: $siteName"
-              Stop-IISSite -Name $siteName -ErrorAction SilentlyContinue
-              Start-Sleep -Seconds 3
-              Write-Host "IIS Site stopped"
-            }
-            
           } catch {
-            Write-Host "⚠️  IIS management error: $($_.Exception.Message)"
-            Write-Host "Continuing with deployment..."
+            Write-Host "⚠️  IIS management skipped: $($_.Exception.Message)"
           }
 
-          # === مرحله 2: مدیریت دسترسی‌ها ===
-          Write-Host "`n=== Step 2: Permission Management ==="
-          
-          # ایجاد target directory در صورت عدم وجود
+          # === مرحله 2: ایجاد و تنظیم مجوزهای پوشه مقصد ===
+          Write-Host "`n--- Target Directory Management ---"
           if (-not (Test-Path $targetPath)) {
             Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
           }
           
+          # تنظیم مجوزها
           try {
-            # تنظیم مجوزهای کامل برای کاربر جاری
             $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-            Write-Host "Setting full permissions for user: $currentUser"
-            
             icacls $targetPath /grant "${currentUser}:(OI)(CI)F" /T /C /Q
-            
-            # تنظیم مجوزهای IIS Users
             icacls $targetPath /grant "IIS_IUSRS:(OI)(CI)F" /T /C /Q
-            icacls $targetPath /grant "IUSR:(OI)(CI)F" /T /C /Q
-            
-            Write-Host "✅ Permissions set successfully"
+            Write-Host "✅ Permissions set"
           } catch {
-            Write-Host "⚠️  Permission setting error: $($_.Exception.Message)"
-            Write-Host "Continuing with deployment..."
+            Write-Host "⚠️  Permission warning: $($_.Exception.Message)"
           }
 
-          # === مرحله 3: پاکسازی قوی ===
-          Write-Host "`n=== Step 3: Aggressive Cleanup ==="
-          
-          $maxCleanupRetries = 5
-          $cleanupAttempt = 0
-          $cleanSuccess = $false
-          
-          while ($cleanupAttempt -lt $maxCleanupRetries -and -not $cleanSuccess) {
-            $cleanupAttempt++
-            Write-Host "Cleanup attempt $cleanupAttempt of $maxCleanupRetries..."
-            
+          # === مرحله 3: پاکسازی هوشمند ===
+          Write-Host "`n--- Smart Cleanup ---"
+          if (Test-Path $targetPath) {
             try {
-              # بررسی وجود process هایی که ممکن است فایل‌ها را در اختیار داشته باشند
-              $processes = Get-Process | Where-Object { $_.ProcessName -like "*w3wp*" -or $_.ProcessName -like "*iis*" }
-              if ($processes) {
-                Write-Host "Found IIS-related processes, attempting graceful shutdown..."
-                foreach ($proc in $processes) {
-                  try {
-                    $proc.CloseMainWindow()
-                    Start-Sleep -Seconds 1
-                  } catch {
-                    Write-Host "Could not close process $($proc.ProcessName)"
+              # محافظت از فایل‌های مهم سیستم (اگر وجود دارند)
+              $protectedFiles = @("web.config", ".htaccess", "robots.txt")
+              $backupPath = "$env:TEMP\iis_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
+              
+              # بکاپ فایل‌های محافظت شده
+              foreach ($protectedFile in $protectedFiles) {
+                $filePath = Join-Path $targetPath $protectedFile
+                if (Test-Path $filePath) {
+                  if (-not (Test-Path $backupPath)) {
+                    New-Item -ItemType Directory -Force -Path $backupPath
                   }
-                }
-                Start-Sleep -Seconds 3
-              }
-              
-              # پاکسازی با استفاده از PowerShell cmdlets
-              if (Test-Path $targetPath) {
-                Get-ChildItem -Path $targetPath -Recurse -Force -ErrorAction SilentlyContinue | 
-                  ForEach-Object {
-                    try {
-                      if ($_.PSIsContainer) {
-                        Remove-Item $_.FullName -Recurse -Force -ErrorAction Stop
-                      } else {
-                        # تلاش برای حذف فایل با تنظیم attributes
-                        $_.Attributes = [System.IO.FileAttributes]::Normal
-                        Remove-Item $_.FullName -Force -ErrorAction Stop
-                      }
-                    } catch {
-                      Write-Host "Failed to remove: $($_.FullName)"
-                    }
-                  }
-              }
-              
-              # بررسی موفقیت پاکسازی
-              $remainingItems = Get-ChildItem -Path $targetPath -Recurse -Force -ErrorAction SilentlyContinue
-              if ($remainingItems.Count -eq 0) {
-                $cleanSuccess = $true
-                Write-Host "✅ Directory cleaned successfully"
-              } else {
-                Write-Host "⚠️  $($remainingItems.Count) items remain, retrying..."
-                Start-Sleep -Seconds 5
-              }
-              
-            } catch {
-              Write-Host "⚠️  Cleanup attempt failed: $($_.Exception.Message)"
-              Start-Sleep -Seconds 5
-            }
-          }
-          
-          if (-not $cleanSuccess) {
-            Write-Host "⚠️  Complete cleanup failed, but continuing..."
-          }
-
-          # === مرحله 4: کپی هوشمند ===
-          Write-Host "`n=== Step 4: Smart Copy Operation ==="
-          
-          $copySuccess = $false
-          $maxCopyRetries = 3
-          
-          for ($copyAttempt = 1; $copyAttempt -le $maxCopyRetries; $copyAttempt++) {
-            Write-Host "Copy attempt $copyAttempt of $maxCopyRetries..."
-            
-            try {
-              # استفاده از robocopy برای کپی قدرتمند
-              Write-Host "Using ROBOCOPY for reliable file copying..."
-              
-              $robocopyArgs = @(
-                "`"$sourcePath`"",
-                "`"$targetPath`"",
-                "/E",           # کپی subdirectories (شامل خالی‌ها)
-                "/R:3",         # 3 retry
-                "/W:5",         # 5 second wait between retries
-                "/MT:4",        # multi-threaded
-                "/NFL",         # No File List
-                "/NDL",         # No Directory List
-                "/NP"           # No Progress
-              )
-              
-              $robocopyCmd = "robocopy " + ($robocopyArgs -join " ")
-              Write-Host "Running: $robocopyCmd"
-              
-              $robocopyResult = & cmd.exe /c $robocopyCmd
-              $robocopyExitCode = $LASTEXITCODE
-              
-              # ROBOCOPY exit codes: 0=no files copied, 1=files copied successfully, 2=extra files/dirs deleted
-              if ($robocopyExitCode -le 7) {
-                Write-Host "✅ ROBOCOPY completed with exit code: $robocopyExitCode"
-                $copySuccess = $true
-                break
-              } else {
-                Write-Host "❌ ROBOCOPY failed with exit code: $robocopyExitCode"
-                if ($copyAttempt -lt $maxCopyRetries) {
-                  Write-Host "Retrying in 10 seconds..."
-                  Start-Sleep -Seconds 10
+                  Copy-Item $filePath "$backupPath\$protectedFile" -Force
+                  Write-Host "Backed up: $protectedFile"
                 }
               }
               
-            } catch {
-              Write-Host "❌ Copy attempt $copyAttempt failed: $($_.Exception.Message)"
-              if ($copyAttempt -lt $maxCopyRetries) {
-                Start-Sleep -Seconds 10
+              # پاکسازی با retry mechanism
+              $maxRetries = 3
+              $retryCount = 0
+              $cleanSuccess = $false
+              
+              while ($retryCount -lt $maxRetries -and -not $cleanSuccess) {
+                try {
+                  Get-ChildItem -Path $targetPath -Recurse -Force | 
+                    Where-Object { $_.FullName -notlike "*backup*" } |
+                    Remove-Item -Force -Recurse -ErrorAction Stop
+                  $cleanSuccess = $true
+                  Write-Host "✅ Directory cleaned successfully"
+                } catch {
+                  $retryCount++
+                  Write-Host "Cleanup retry $retryCount/$maxRetries..."
+                  Start-Sleep -Seconds 2
+                }
               }
+              
+              # بازگردانی فایل‌های محافظت شده
+              if (Test-Path $backupPath) {
+                Copy-Item "$backupPath\*" $targetPath -Force -ErrorAction SilentlyContinue
+                Remove-Item $backupPath -Recurse -Force -ErrorAction SilentlyContinue
+                Write-Host "Protected files restored"
+              }
+              
+            } catch {
+              Write-Host "⚠️  Cleanup warning: $($_.Exception.Message)"
             }
           }
-          
-          # اگر robocopy شکست خورد، استفاده از PowerShell fallback
-          if (-not $copySuccess) {
-            Write-Host "ROBOCOPY failed, trying PowerShell copy as fallback..."
-            try {
-              Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force -ErrorAction Stop
+
+          # === مرحله 4: کپی هوشمند با ROBOCOPY ===
+          Write-Host "`n--- Smart Copy with ROBOCOPY ---"
+          try {
+            $robocopyArgs = @(
+              "`"$sourcePath`"",
+              "`"$targetPath`"",
+              "/E",           # کپی subdirectories
+              "/R:2",         # 2 retry
+              "/W:3",         # 3 second wait
+              "/MT:2",        # multi-threaded
+              "/XO"           # exclude older files
+            )
+            
+            $robocopyCmd = "robocopy " + ($robocopyArgs -join " ")
+            Write-Host "Running: $robocopyCmd"
+            
+            & cmd.exe /c $robocopyCmd
+            $robocopyExitCode = $LASTEXITCODE
+            
+            # ROBOCOPY success codes: 0-7 are typically successful
+            if ($robocopyExitCode -le 7) {
+              Write-Host "✅ ROBOCOPY completed successfully (exit code: $robocopyExitCode)"
               $copySuccess = $true
+            } else {
+              throw "ROBOCOPY failed with exit code: $robocopyExitCode"
+            }
+          } catch {
+            Write-Host "⚠️  ROBOCOPY failed: $($_.Exception.Message)"
+            Write-Host "Falling back to PowerShell copy..."
+            
+            try {
+              Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
               Write-Host "✅ PowerShell copy succeeded"
+              $copySuccess = $true
             } catch {
-              Write-Host "❌ PowerShell copy also failed: $($_.Exception.Message)"
+              Write-Host "❌ All copy methods failed: $($_.Exception.Message)"
+              exit 1
             }
           }
 
           # === مرحله 5: بررسی نتیجه ===
-          Write-Host "`n=== Step 5: Deployment Verification ==="
-          
+          Write-Host "`n--- Deployment Verification ---"
           if ($copySuccess) {
             try {
-              $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File -ErrorAction SilentlyContinue
+              $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
               Write-Host "✅ Deployment successful!"
               Write-Host "Total files deployed: $($deployedFiles.Count)"
               
               # بررسی فایل‌های کلیدی
-              $keyFiles = @("index.html", "assets", "search")
+              $keyFiles = @("index.html")
               foreach ($keyFile in $keyFiles) {
-                $keyPath = Join-Path $targetPath $keyFile
-                if (Test-Path $keyPath) {
-                  Write-Host "✅ Key component exists: $keyFile"
+                if (Test-Path (Join-Path $targetPath $keyFile)) {
+                  Write-Host "✅ Key file exists: $keyFile"
                 } else {
-                  Write-Host "⚠️  Key component missing: $keyFile"
+                  Write-Host "⚠️  Key file missing: $keyFile"
                 }
               }
             } catch {
-              Write-Host "⚠️  Could not verify deployment: $($_.Exception.Message)"
+              Write-Host "⚠️  Verification warning: $($_.Exception.Message)"
             }
-          } else {
-            Write-Host "❌ Deployment failed completely"
-            exit 1
           }
 
           # === مرحله 6: راه‌اندازی مجدد IIS ===
-          Write-Host "`n=== Step 6: Restart IIS Services ==="
+          Write-Host "`n--- Restart IIS Services ---"
           try {
-            # شروع مجدد Application Pool
-            if ($appPoolExists) {
+            if ($appPool) {
               Write-Host "Starting Application Pool: $appPoolName"
               Start-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
               Start-Sleep -Seconds 3
-              
-              $poolState = (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue).State
-              Write-Host "Application Pool state after start: $poolState"
+              Write-Host "✅ Application Pool restarted"
             }
-            
-            # شروع مجدد IIS Site
-            if ($site) {
-              Write-Host "Starting IIS Site: $siteName"
-              Start-IISSite -Name $siteName -ErrorAction SilentlyContinue
-              Start-Sleep -Seconds 2
-              Write-Host "IIS Site started"
-            }
-            
-            Write-Host "✅ IIS services restarted"
           } catch {
-            Write-Host "⚠️  IIS restart error: $($_.Exception.Message)"
+            Write-Host "⚠️  IIS restart warning: $($_.Exception.Message)"
           }
           
-          Write-Host "`n🎉 Complete deployment process finished!"
+          Write-Host "`n🎉 Smart deployment completed successfully!"

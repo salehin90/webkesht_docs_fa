@@ -1,0 +1,42 @@
+/* رفع مشکلات خاص RTL */
+.md-nav__title {
+  direction: rtl;
+}
+
+.md-nav__list {
+  direction: rtl;
+}
+
+.md-search__form {
+  direction: rtl;
+}
+
+.md-search__input {
+  text-align: right;
+}
+
+/* رفع مشکل آیکون‌های ناوبری */
+.md-nav__icon {
+  transform: scaleX(-1);
+}
+
+/* بهبود فونت فارسی */
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('https://cdn.jsdelivr.net/npm/vazirmatn@33.0.3/Vazirmatn-Regular.woff2') format('woff2');
+  font-display: swap;
+}
+
+body {
+  font-family: 'Vazirmatn', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* بهبود کدهای فارسی */
+code, pre {
+  direction: ltr;
+}
+
+/* رفع مشکل جستجو */
+.md-search-result__meta {
+  direction: rtl;
+}
