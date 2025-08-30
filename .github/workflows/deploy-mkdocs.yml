@@ -1,5 +1,5 @@
 # نام Workflow که در تب Actions گیت‌هاب نمایش داده می‌شود
-name: Deploy MkDocs to IIS - Enhanced Version V2
+name: Deploy MkDocs to IIS - Enhanced Version V3
 
 # تریگر: این Workflow چه زمانی اجرا شود؟
 # در اینجا، هر زمان که کدی به برنچ main پوش شود
@@ -12,7 +12,7 @@ on:
 jobs:
   build-and-deploy:
     # نام نمایشی Job
-    name: Build and Deploy MkDocs Site Enhanced V2
+    name: Build and Deploy MkDocs Site Enhanced V3
 
     # مهم: مشخص می‌کنیم که این Job باید روی Runner شخصی ما اجرا شود
     runs-on: self-hosted
@@ -132,13 +132,10 @@ jobs:
               # تشخیص مسیر صحیح source
               if (Test-Path "site\fa") {
                 Write-Host "✅ FA-specific build directory found: site\fa"
-                $global:SourcePath = "site\fa"
               } elseif (Test-Path "site\ar") {
                 Write-Host "✅ AR-specific build directory found: site\ar"
-                $global:SourcePath = "site\ar"
               } else {
                 Write-Host "✅ Using main site directory: site"
-                $global:SourcePath = "site"
               }
             } else {
               Write-Host "❌ Site directory not created!"
@@ -376,7 +373,7 @@ jobs:
               Start-Sleep -Seconds 3
               
               # بررسی وضعیت App Pool
-              $appPoolState = (Get-WebAppPoolState -Name $appPoolName).Value
+              $appPoolSta = (Get-WebAppPoolState -Name $appPoolName).Value
               Write-Host "Application Pool state: $appPoolState"
               Write-Host "✅ Application Pool management completed"
             }
@@ -384,5 +381,5 @@ jobs:
             Write-Host "⚠️  IIS restart warning: $($_.Exception.Message)"
           }
           
-          Write-Host "`n🎉 Smart deployment completed successfully!"
+          Write-Host "`n🎉 Smart deployment completd successfully!"
           Write-Host "Site should be available at your configured IIS endpoint"
