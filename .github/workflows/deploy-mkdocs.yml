@@ -12,7 +12,7 @@ on:
 jobs:
   build-and-deploy:
     # نام نمایشی Job
-    name: Build and Deploy MkDocs Site
+    name: Build and Deploy MkDocs Site V3
 
     # مهم: مشخص می‌کنیم که این Job باید روی Runner شخصی ما اجرا شود
     runs-on: self-hosted
@@ -37,11 +37,11 @@ jobs:
         shell: powershell
         run: |
           # مسیر پوشه پابلیش IIS را در این متغیر قرار دهید
-          $targetPath = "C:\inetpub\wwwroot\my-static-site"
+          $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           
           # مسیر پوشه خروجی بیلد MkDocs (که به صورت پیش‌فرض 'site' است)
           # ${{ github.workspace }} به مسیر کاری Runner اشاره دارد که کدها در آن checkout شده‌اند
-          $sourcePath = "${{ github.workspace }}\site"
+          $sourcePath = "${{ github.workspace }}\site\fa"
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
