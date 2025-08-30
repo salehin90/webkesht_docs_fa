@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Debug Fixed V6
+name: Deploy MkDocs to IIS - Deploy Fixed V7
 
 on:
   push:
@@ -249,8 +249,30 @@ jobs:
             exit $buildExitCode
           }
 
+      - name: Stop IIS Application Pool (if exists)
+        shell: powershell
+        run: |
+          Write-Host "=== Stopping IIS Application Pool ==="
+          try {
+            Import-Module WebAdministration -ErrorAction SilentlyContinue
+            
+            # بررسی وجود Application Pool
+            $appPoolName = "webkesht_docs"
+            if (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue) {
+              Write-Host "Stopping Application Pool: $appPoolName"
+              Stop-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
+              Start-Sleep -Seconds 3
+              Write-Host "Application Pool stopped"
+            } else {
+              Write-Host "Application Pool $appPoolName not found - skipping"
+            }
+          }
+          catch {
+            Write-Host "Warning: Could not manage IIS Application Pool: $($_.Exception.Message)"
+            Write-Host "Continuing with deployment..."
+          }
+
       - name: Deploy to IIS
-        if: success()
         shell: powershell
         run: |
           Write-Host "=== Starting Deployment ==="
@@ -267,19 +289,153 @@ jobs:
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
+          # ایجاد target directory در صورت عدم وجود
           if (-not (Test-Path $targetPath)) {
             Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
           }
 
-          Write-Host "Cleaning target directory..."
-          Get-ChildItem -Path $targetPath -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+          Write-Host "Cleaning target directory with retry mechanism..."
+          $maxRetries = 3
+          $retryCount = 0
+          $cleanSuccess = $false
+          
+          while ($retryCount -lt $maxRetries -and -not $cleanSuccess) {
+            try {
+              $retryCount++
+              Write-Host "Cleanup attempt $retryCount..."
+              
+              # پاکسازی با force و ignore errors
+              Get-ChildItem -Path $targetPath -Recurse -ErrorAction SilentlyContinue | 
+                Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
+              
+              # بررسی اینکه آیا پاکسازی موفق بوده
+              $remainingFiles = Get-ChildItem -Path $targetPath -Recurse -ErrorAction SilentlyContinue
+              if ($remainingFiles.Count -eq 0) {
+                $cleanSuccess = $true
+                Write-Host "✅ Directory cleaned successfully"
+              } else {
+                Write-Host "⚠️  $($remainingFiles.Count) files remain - retrying..."
+                Start-Sleep -Seconds 2
+              }
+            }
+            catch {
+              Write-Host "⚠️  Cleanup attempt $retryCount failed: $($_.Exception.Message)"
+              if ($retryCount -lt $maxRetries) {
+                Start-Sleep -Seconds 3
+              }
+            }
+          }
+          
+          if (-not $cleanSuccess) {
+            Write-Host "⚠️  Complete cleanup failed, but continuing with deployment..."
+          }
 
-          Write-Host "Copying files..."
-          Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
+          Write-Host "Copying files with error handling..."
+          $copySuccess = $false
+          $copyRetries = 3
+          $copyAttempt = 0
+          
+          while ($copyAttempt -lt $copyRetries -and -not $copySuccess) {
+            try {
+              $copyAttempt++
+              Write-Host "Copy attempt $copyAttempt..."
+              
+              # کپی کردن فایل‌ها با retry mechanism
+              Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force -ErrorAction Stop
+              $copySuccess = $true
+              Write-Host "✅ Files copied successfully"
+            }
+            catch {
+              Write-Host "⚠️  Copy attempt $copyAttempt failed: $($_.Exception.Message)"
+              if ($copyAttempt -lt $copyRetries) {
+                Write-Host "Waiting before retry..."
+                Start-Sleep -Seconds 5
+              } else {
+                Write-Host "❌ All copy attempts failed!"
+                
+                # تلاش برای کپی فایل به فایل
+                Write-Host "Trying individual file copy as fallback..."
+                try {
+                  $sourceFiles = Get-ChildItem -Path $sourcePath -Recurse -File
+                  $successCount = 0
+                  $failCount = 0
+                  
+                  foreach ($file in $sourceFiles) {
+                    $relativePath = $file.FullName.Substring($sourcePath.Length + 1)
+                    $targetFile = Join-Path $targetPath $relativePath
+                    $targetDir = Split-Path $targetFile -Parent
+                    
+                    try {
+                      if (-not (Test-Path $targetDir)) {
+                        New-Item -ItemType Directory -Path $targetDir -Force -ErrorAction SilentlyContinue
+                      }
+                      
+                      Copy-Item -Path $file.FullName -Destination $targetFile -Force -ErrorAction Stop
+                      $successCount++
+                    }
+                    catch {
+                      Write-Host "❌ Failed to copy: $relativePath - $($_.Exception.Message)"
+                      $failCount++
+                    }
+                  }
+                  
+                  Write-Host "Individual copy results: $successCount succeeded, $failCount failed"
+                  if ($successCount -gt 0) {
+                    $copySuccess = $true
+                  }
+                }
+                catch {
+                  Write-Host "❌ Individual file copy also failed: $($_.Exception.Message)"
+                }
+              }
+            }
+          }
+          
+          if (-not $copySuccess) {
+            Write-Host "❌ Deployment failed - could not copy files"
+            exit 1
+          }
 
           Write-Host "`n=== Deployment Verification ==="
-          $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
-          Write-Host "Total files deployed: $($deployedFiles.Count)"
+          try {
+            $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File -ErrorAction SilentlyContinue
+            Write-Host "Total files deployed: $($deployedFiles.Count)"
+            
+            # بررسی فایل‌های کلیدی
+            $keyFiles = @("index.html", "assets", "search")
+            foreach ($keyFile in $keyFiles) {
+              $keyPath = Join-Path $targetPath $keyFile
+              if (Test-Path $keyPath) {
+                Write-Host "✅ Key component exists: $keyFile"
+              } else {
+                Write-Host "⚠️  Key component missing: $keyFile"
+              }
+            }
+          }
+          catch {
+            Write-Host "⚠️  Could not verify deployment: $($_.Exception.Message)"
+          }
+
+      - name: Start IIS Application Pool
+        shell: powershell
+        run: |
+          Write-Host "=== Starting IIS Application Pool ==="
+          try {
+            Import-Module WebAdministration -ErrorAction SilentlyContinue
+            
+            $appPoolName = "webkesht_docs"
+            if (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue) {
+              Write-Host "Starting Application Pool: $appPoolName"
+              Start-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
+              Start-Sleep -Seconds 2
+              
+              $poolState = (Get-IISAppPool -Name $appPoolName).State
+              Write-Host "Application Pool state: $poolState"
+            }
+          }
+          catch {
+            Write-Host "Warning: Could not start IIS Application Pool: $($_.Exception.Message)"
+          }
           
-          Write-Host "✅ Deployment completed successfully!"
+          Write-Host "✅ Deployment process completed!"
