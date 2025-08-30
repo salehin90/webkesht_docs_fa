@@ -17,12 +17,16 @@ jobs:
       - name: Build MkDocs site
         shell: powershell
         run: |
-          # تنظیم PATH برای Python
-          $env:PATH = "C:\Users\Administrator\AppData\Local\Programs\Python\Python313;" + $env:PATH
+          # تنظیم PATH برای Python و Scripts
+          $env:PATH = "C:\Users\Administrator\AppData\Local\Programs\Python\Python313;C:\Users\Administrator\AppData\Local\Programs\Python\Python313\Scripts;" + $env:PATH
           
-          # استفاده از python -m mkdocs
-          Write-Host "Building MkDocs site using Python module..."
-          python -m mkdocs build --clean
+          # بررسی در دسترس بودن mkdocs
+          Write-Host "Checking mkdocs availability..."
+          Get-Command mkdocs -ErrorAction SilentlyContinue
+          
+          # اجرای mkdocs build
+          Write-Host "Building MkDocs site..."
+          & mkdocs build --clean
 
       - name: Deploy to IIS
         shell: powershell
