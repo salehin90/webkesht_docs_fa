@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Debug Fixed V3
+name: Deploy MkDocs to IIS - Debug Fixed V4
 
 on:
   push:
@@ -55,15 +55,16 @@ jobs:
           Write-Host "=== Testing Python YAML parsing ==="
           
           # ایجاد فایل Python موقت برای تست
-          $pythonScript = @"import yaml
-           import sys
-           sys.stdout.reconfigure(encoding='utf-8')
-           with open('mkdocs.yml', 'r', encoding='utf-8') as f:
-           config = yaml.safe_load(f)
-           print('YAML parsing successful!')
-           print('Site name:', config.get('site_name', 'Not found'))
-           print('Theme name:', config.get('theme', {}).get('name', 'Not found'))"@
-          $pythonScript | Out-File -FilePath "test_yaml.py" -Encoding UTF8
+          $pythonCode = 'import yaml' + "`n"
+          $pythonCode += 'import sys' + "`n"
+          $pythonCode += 'sys.stdout.reconfigure(encoding="utf-8")' + "`n"
+          $pythonCode += 'with open("mkdocs.yml", "r", encoding="utf-8") as f:' + "`n"
+          $pythonCode += '    config = yaml.safe_load(f)' + "`n"
+          $pythonCode += '    print("YAML parsing successful!")' + "`n"
+          $pythonCode += '    print("Site name:", config.get("site_name", "Not found"))' + "`n"
+          $pythonCode += '    print("Theme name:", config.get("theme", {}).get("name", "Not found"))'
+          
+          $pythonCode | Out-File -FilePath "test_yaml.py" -Encoding UTF8
           
           & python test_yaml.py
           Write-Host "YAML parsing test completed with exit code: $LASTEXITCODE"
@@ -84,12 +85,12 @@ jobs:
           }
           
           # اضافه کردن docs directory به کانفیگ
-          $fullMinimalConfig = @"
-          site_name: Test Site
-          docs_dir: docs_test
-          theme:
-          name: material"@
-          $fullMinimalConfig | Out-File -FilePath "mkdocs_test.yml" -Encoding UTF8
+          $minimalConfig = 'site_name: Test Site' + "`n"
+          $minimalConfig += 'docs_dir: docs_test' + "`n"
+          $minimalConfig += 'theme:' + "`n"
+          $minimalConfig += '  name: material'
+          
+          $minimalConfig | Out-File -FilePath "mkdocs_test.yml" -Encoding UTF8
           
           Write-Host "Minimal config content:"
           Get-Content "mkdocs_test.yml" | ForEach-Object { Write-Host "  $_" }
