@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Fixed Test
+name: Deploy MkDocs to IIS - Debug Configuration
 
 on:
   push:
@@ -7,135 +7,43 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy MkDocs Site - Fixed Test
+    name: Build and Deploy MkDocs Site - Debug Configuration
     runs-on: self-hosted
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Test and Build MkDocs
+      - name: Debug Configuration Issues
         shell: powershell
         run: |
           Write-Host "=== Environment Check ==="
           Set-Location "${{ github.workspace }}"
           Write-Host "Current directory: $(Get-Location)"
           
-          Write-Host "`n=== MkDocs Version Check ==="
-          python -m mkdocs --version
+          Write-Host "`n=== File Structure ==="
+          Get-ChildItem -Recurse | Select-Object FullName | Format-Table -AutoSize
           
-          Write-Host "`n=== Testing MkDocs Configuration ==="
-          # تست صحت فایل کانفیگ با دستور serve که فوری متوقف می‌شود
-          Write-Host "Validating mkdocs.yml configuration..."
+          Write-Host "`n=== MkDocs Configuration Content ==="
+          $configContent = Get-Content -Path "mkdocs.yml" -Encoding UTF8
+          Write-Host "Configuration file content:"
+          $configContent | ForEach-Object { Write-Host "  $_" }
           
-          # ابتدا وجود فایل‌های مورد نیاز را بررسی می‌کنیم
-          if (-not (Test-Path "mkdocs.yml")) {
-            Write-Host "ERROR: mkdocs.yml not found"
-            exit 1
-          }
-          
-          if (-not (Test-Path "docs")) {
-            Write-Host "ERROR: docs directory not found"
-            exit 1
-          }
-          
-          Write-Host "Required files exist. Attempting build..."
-          
-          Write-Host "`n=== MkDocs Build ==="
+          Write-Host "`n=== Testing Basic MkDocs Commands ==="
           try {
-            # اجرای build با verbose output
-            $env:PYTHONIOENCODING = "utf-8"
-            python -m mkdocs build --clean --verbose 2>&1 | Tee-Object -Variable buildOutput
-            
-            Write-Host "Build command executed. Exit code: $LASTEXITCODE"
-            Write-Host "Build output:"
-            $buildOutput | ForEach-Object { Write-Host $_ }
-            
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "`n=== Build Success! ==="
-              
-              # بررسی فایل‌های ساخته شده
-              if (Test-Path "site") {
-                Write-Host "Site directory contents:"
-                Get-ChildItem -Path "site" -Recurse | Select-Object FullName, Length | Format-Table -AutoSize
-                
-                # بررسی پوشه fa
-                if (Test-Path "site\fa") {
-                  Write-Host "`nFA directory found! Contents:"
-                  Get-ChildItem -Path "site\fa" | Select-Object Name, Length | Format-Table -AutoSize
-                } else {
-                  Write-Host "`nFA directory not found. Available directories in site:"
-                  Get-ChildItem -Path "site" -Directory | Select-Object Name
-                }
-              } else {
-                Write-Host "ERROR: Site directory was not created"
-                exit 1
-              }
-            } else {
-              Write-Host "`n=== Build Failed! ==="
-              Write-Host "Exit code: $LASTEXITCODE"
-              Write-Host "Error output: $buildOutput"
-              exit 1
-            }
+            Write-Host "Testing mkdocs help:"
+            python -m mkdocs --help 2>&1 | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
           } catch {
-            Write-Host "ERROR: Exception during build - $($_.Exception.Message)"
-            Write-Host "Exception details: $($_.Exception)"
-            exit 1
+            Write-Host "Help command failed: $($_.Exception.Message)"
           }
-
-      - name: Deploy to IIS
-        if: success()
-        shell: powershell
-        run: |
-          Write-Host "=== Starting Deployment ==="
-          $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           
-          # تشخیص مسیر صحیح source
-          if (Test-Path "${{ github.workspace }}\site\fa") {
-            $sourcePath = "${{ github.workspace }}\site\fa"
-            Write-Host "Using FA-specific build: $sourcePath"
-          } else {
-            $sourcePath = "${{ github.workspace }}\site"
-            Write-Host "Using main site build: $sourcePath"
-          }
-
-          Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
-
-          # ایجاد پوشه مقصد
-          if (-not (Test-Path $targetPath)) {
-            Write-Host "Creating target directory..."
-            New-Item -ItemType Directory -Force -Path $targetPath
-          }
-
-          # پاکسازی پوشه مقصد
-          Write-Host "Cleaning target directory..."
+          Write-Host "`n=== Testing Python YAML parsing ==="
           try {
-            Get-ChildItem -Path $targetPath -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-            Write-Host "Target directory cleaned"
-          } catch {
-            Write-Host "Warning: Could not clean some files - $($_.Exception.Message)"
-          }
-
-          # کپی فایل‌ها
-          Write-Host "Copying files..."
-          try {
-            Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
-            Write-Host "Files copied successfully"
-          } catch {
-            Write-Host "ERROR: Failed to copy files - $($_.Exception.Message)"
-            exit 1
-          }
-
-          # تأیید deployment
-          Write-Host "`n=== Deployment Verification ==="
-          if (Test-Path $targetPath) {
-            $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
-            Write-Host "Total files deployed: $($deployedFiles.Count)"
-            Write-Host "Deployed files summary:"
-            Get-ChildItem -Path $targetPath | Select-Object Name, Length, LastWriteTime | Format-Table -AutoSize
-          } else {
-            Write-Host "ERROR: Target path does not exist after deployment"
-            exit 1
-          }
-
-          Write-Host "=== Deployment completed successfully! ==="
+            python -c "import yaml
+                       import sys
+                       sys.stdout.reconfigure(encoding='utf-8')
+                       with open('mkdocs.yml', 'r', encoding='utf-8') as f:
+                       config = yaml.safe_load(f)
+                       print('YAML parsing successful!')
+                       print('Site name:', config.get('site_name', 'Not found'))
+                       print('Theme name:', config.get('theme', {}).get('name', 'Not
