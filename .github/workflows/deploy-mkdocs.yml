@@ -1,0 +1,63 @@
+# نام Workflow که در تب Actions گیت‌هاب نمایش داده می‌شود
+name: Deploy MkDocs to IIS
+
+# تریگر: این Workflow چه زمانی اجرا شود؟
+# در اینجا، هر زمان که کدی به برنچ main پوش شود
+on:
+  push:
+    branches:
+      - main  # یا master، بسته به نام برنچ اصلی شما
+
+# تعریف کارها (Jobs)
+jobs:
+  build-and-deploy:
+    # نام نمایشی Job
+    name: Build and Deploy MkDocs Site
+
+    # مهم: مشخص می‌کنیم که این Job باید روی Runner شخصی ما اجرا شود
+    runs-on: self-hosted
+
+    # مراحل اجرای Job
+    steps:
+      # مرحله 1: دریافت آخرین نسخه کد از ریپازیتوری
+      # این کار کدها را در فضای کاری Runner روی سرور شما دانلود می‌کند
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # مرحله 2: بیلد کردن سایت با دستور mkdocs build
+      # این دستور فایل‌های استاتیک نهایی (HTML, CSS, ...) را می‌سازد
+      # و به طور پیش‌فرض آن‌ها را در پوشه‌ای به نام 'site' در ریشه پروژه قرار می‌دهد
+      - name: Build MkDocs site
+        run: mkdocs build --clean
+        # استفاده از --clean تضمین می‌کند که فایل‌های قدیمی از بیلد قبلی پاک شوند
+
+      # مرحله 3: استقرار فایل‌های ساخته شده در پوشه IIS
+      # این مرحله از PowerShell برای کپی کردن فایل‌ها استفاده می‌کند
+      - name: Deploy to IIS
+        shell: powershell
+        run: |
+          # مسیر پوشه پابلیش IIS را در این متغیر قرار دهید
+          $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
+          
+          # مسیر پوشه خروجی بیلد MkDocs (که به صورت پیش‌فرض 'site' است)
+          # ${{ github.workspace }} به مسیر کاری Runner اشاره دارد که کدها در آن checkout شده‌اند
+          $sourcePath = "${{ github.workspace }}\site"
+
+          Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
+
+          # بررسی وجود پوشه مقصد و ایجاد آن در صورت نیاز
+          if (-not (Test-Path $targetPath)) {
+            Write-Host "Target directory does not exist. Creating..."
+            New-Item -ItemType Directory -Force -Path $targetPath
+          }
+
+          # پاک‌سازی کامل پوشه مقصد قبل از کپی کردن فایل‌های جدید
+          # این کار برای حذف فایل‌هایی که ممکن است در سورس جدید حذف شده باشند، ضروری است
+          Write-Host "Cleaning target directory..."
+          Get-ChildItem -Path $targetPath -Recurse | Remove-Item -force -recurse
+
+          # کپی کردن محتویات پوشه 'site' به پوشه IIS
+          Write-Host "Copying new files..."
+          Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
+
+          Write-Host "Deployment completed successfully!"
