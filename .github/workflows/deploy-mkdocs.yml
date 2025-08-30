@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Debug Fixed
+name: Deploy MkDocs to IIS - Debug Fixed V2
 
 on:
   push:
@@ -36,10 +36,12 @@ jobs:
           
           Write-Host "=== Testing Basic MkDocs Commands ==="
           try {
-            Write-Host "Testing mkdocs help:"
+            Write-Host "Testing mkdocs version:"
+            python -m mkdocs --version
+            Write-Host "Testing mkdocs help (first few lines):"
             python -m mkdocs --help 2>&1 | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
           } catch {
-            Write-Host "Help command failed: $($_.Exception.Message)"
+            Write-Host "Command failed: $($_.Exception.Message)"
           }
 
       - name: Test YAML Parsing
@@ -67,20 +69,50 @@ jobs:
           Set-Location "${{ github.workspace }}"
           
           Write-Host "=== Creating Minimal Test Configuration ==="
+          
+          # ایجاد فایل کانفیگ ساده
           $minimalConfig = "site_name: Test Site`ntheme:`n  name: material"
           $minimalConfig | Out-File -FilePath "mkdocs_test.yml" -Encoding UTF8
           
-          Write-Host "Testing with minimal configuration:"
-          try {
-            python -m mkdocs build --config-file mkdocs_test.yml --verbose 2>&1 | ForEach-Object { 
-              Write-Host "BUILD: $_" 
-            }
-            Write-Host "Minimal config test - Exit code: $LASTEXITCODE"
-          } catch {
-            Write-Host "Minimal config test failed: $($_.Exception.Message)"
+          # ایجاد پوشه docs با فایل index
+          if (-not (Test-Path "docs_test")) {
+            New-Item -ItemType Directory -Name "docs_test" -Force
+            "# Test Page`n`nThis is a test page." | Out-File -FilePath "docs_test\index.md" -Encoding UTF8
           }
           
+          # اضافه کردن docs directory به کانفیگ
+          $fullMinimalConfig = "site_name: Test Site`ndocs_dir: docs_test`ntheme:`n  name: material"
+          $fullMinimalConfig | Out-File -FilePath "mkdocs_test.yml" -Encoding UTF8
+          
+          Write-Host "Minimal config content:"
+          Get-Content "mkdocs_test.yml" | ForEach-Object { Write-Host "  $_" }
+          
+          Write-Host "`nTesting with minimal configuration:"
+          try {
+            $output = python -m mkdocs build --config-file mkdocs_test.yml --verbose 2>&1
+            $exitCode = $LASTEXITCODE
+            
+            Write-Host "Exit Code: $exitCode"
+            Write-Host "Output:"
+            $output | ForEach-Object { Write-Host "  $_" }
+            
+            if ($exitCode -eq 0) {
+              Write-Host "Minimal config test PASSED"
+              if (Test-Path "site") {
+                Write-Host "Site directory created for minimal test"
+                Remove-Item -Path "site" -Recurse -Force -ErrorAction SilentlyContinue
+              }
+            } else {
+              Write-Host "Minimal config test FAILED with exit code: $exitCode"
+            }
+            
+          } catch {
+            Write-Host "Minimal config test failed with exception: $($_.Exception.Message)"
+          }
+          
+          # پاکسازی فایل‌های تست
           Remove-Item "mkdocs_test.yml" -ErrorAction SilentlyContinue
+          Remove-Item -Path "docs_test" -Recurse -Force -ErrorAction SilentlyContinue
 
       - name: Prepare Required Files
         shell: powershell
@@ -98,14 +130,24 @@ jobs:
           }
           
           if (-not (Test-Path "overrides")) {
-            Write-Host "Warning: overrides directory does not exist (referenced in theme.custom_dir)"
+            Write-Host "Creating overrides directory (referenced in theme.custom_dir)..."
+            New-Item -ItemType Directory -Name "overrides" -Force
+            Write-Host "Overrides directory created"
+          } else {
+            Write-Host "Overrides directory exists"
           }
           
           if (-not (Test-Path "stylesheets")) {
-            Write-Host "Warning: stylesheets directory does not exist"
             Write-Host "Creating stylesheets directory with custom.css..."
             New-Item -ItemType Directory -Name "stylesheets" -Force
             "/* Custom CSS */" | Out-File -FilePath "stylesheets\custom.css" -Encoding UTF8
+            Write-Host "Stylesheets directory and custom.css created"
+          } else {
+            Write-Host "Stylesheets directory exists"
+            if (-not (Test-Path "stylesheets\custom.css")) {
+              "/* Custom CSS */" | Out-File -FilePath "stylesheets\custom.css" -Encoding UTF8
+              Write-Host "Created missing custom.css"
+            }
           }
 
       - name: Build Site
@@ -113,7 +155,7 @@ jobs:
         run: |
           Set-Location "${{ github.workspace }}"
           
-          Write-Host "=== Testing Original Configuration Build ==="
+          Write-Host "=== Building Site with Original Configuration ==="
           
           # تنظیم environment variables برای UTF-8
           $env:PYTHONIOENCODING = "utf-8"
@@ -121,32 +163,40 @@ jobs:
           
           Write-Host "Running mkdocs build with verbose output..."
           
-          # اجرای دستور و گرفتن خروجی
-          $buildOutput = & python -m mkdocs build --clean --verbose 2>&1
-          $exitCode = $LASTEXITCODE
-          
-          Write-Host "Process exit code: $exitCode"
-          Write-Host "`nBuild Output:"
-          $buildOutput | ForEach-Object { Write-Host "  $_" }
-          
-          if ($exitCode -eq 0) {
-            Write-Host "`n=== Build Successful ==="
-            if (Test-Path "site") {
-              Write-Host "Site directory created successfully"
-              Get-ChildItem -Path "site" -Recurse | Select-Object FullName | Format-Table -AutoSize
-              
-              # بررسی پوشه fa
-              if (Test-Path "site\fa") {
-                Write-Host "`nFA directory contents:"
-                Get-ChildItem -Path "site\fa" | Select-Object Name, Length | Format-Table -AutoSize
-              } else {
-                Write-Host "`nFA directory not created - using default site directory"
+          try {
+            # اجرای دستور و گرفتن خروجی
+            $buildOutput = python -m mkdocs build --clean --verbose 2>&1
+            $exitCode = $LASTEXITCODE
+            
+            Write-Host "Process exit code: $exitCode"
+            Write-Host "`nBuild Output:"
+            $buildOutput | ForEach-Object { Write-Host "  $_" }
+            
+            if ($exitCode -eq 0) {
+              Write-Host "`n=== Build Successful ==="
+              if (Test-Path "site") {
+                Write-Host "Site directory created successfully"
+                
+                # نمایش ساختار اصلی سایت
+                Write-Host "`nSite structure:"
+                Get-ChildItem -Path "site" | Select-Object Name, Length | Format-Table -AutoSize
+                
+                # بررسی پوشه fa
+                if (Test-Path "site\fa") {
+                  Write-Host "`nFA directory contents:"
+                  Get-ChildItem -Path "site\fa" | Select-Object Name, Length | Format-Table -AutoSize
+                } else {
+                  Write-Host "`nFA directory not created - using default site directory"
+                }
               }
+            } else {
+              Write-Host "`n=== Build Failed ==="
+              Write-Host "Exit code: $exitCode"
+              throw "Build failed with exit code $exitCode"
             }
-          } else {
-            Write-Host "`n=== Build Failed ==="
-            Write-Host "Exit code: $exitCode"
-            exit $exitCode
+          } catch {
+            Write-Host "Build failed with exception: $($_.Exception.Message)"
+            throw
           }
 
       - name: Deploy to IIS
