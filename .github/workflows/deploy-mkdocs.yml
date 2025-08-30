@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Enhanced Version V3-Fixed
+name: Deploy MkDocs to IIS - Enhanced Version V4
 
 on:
   push:
@@ -55,7 +55,7 @@ jobs:
           Write-Host "MkDocs version:"
           python -m mkdocs --version
           
-          Write-Host "`nTesting MkDocs configuration directly..."
+          Write-Host "Testing MkDocs configuration directly..."
           
           try {
             Write-Host "Testing MkDocs config validation..."
@@ -64,15 +64,15 @@ jobs:
             if ($LASTEXITCODE -eq 0) {
               Write-Host "✅ MkDocs configuration is valid!"
             } else {
-              Write-Host "⚠️  MkDocs config validation returned non-zero code but continuing..."
+              Write-Host "⚠️ MkDocs config validation returned non-zero code but continuing..."
             }
             
-            Write-Host "`nTesting configuration syntax with MkDocs serve (dry-run)..."
+            Write-Host "Testing configuration syntax with MkDocs serve (dry-run)..."
             $testResult = python -m mkdocs serve --help 2>&1
             Write-Host "✅ MkDocs commands are accessible"
             
           } catch {
-            Write-Host "⚠️  Configuration test warning: $($_.Exception.Message)"
+            Write-Host "⚠️ Configuration test warning: $($_.Exception.Message)"
             Write-Host "Continuing with build process..."
           }
 
@@ -93,7 +93,6 @@ jobs:
           $buildExitCode = $LASTEXITCODE
           Write-Host "Build exit code: $buildExitCode"
           
-          # تصحیح شده: بلوک if با آکولادهای صحیح
           if ($buildExitCode -eq 0) {
             Write-Host "✅ Build successful!"
             
@@ -101,7 +100,7 @@ jobs:
               $siteFiles = Get-ChildItem -Path "site" -Recurse -File
               Write-Host "Generated files count: $($siteFiles.Count)"
               
-              Write-Host "`nSite directory structure:"
+              Write-Host "Site directory structure:"
               Get-ChildItem -Path "site" -Directory | ForEach-Object { 
                 Write-Host "  📁 $($_.Name)" 
               }
@@ -116,13 +115,13 @@ jobs:
             } else {
               Write-Host "❌ Site directory not created!"
               
-              Write-Host "`nCurrent directory contents:"
+              Write-Host "Current directory contents:"
               Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" }
               exit 1
             }
           } else {
             Write-Host "❌ Build failed!"
-            Write-Host "`nTrying to show more detailed error information..."
+            Write-Host "Trying to show more detailed error information..."
             
             try {
               python -m mkdocs build --verbose --strict 2>&1 | Write-Host
@@ -159,14 +158,18 @@ jobs:
             Write-Host "❌ No valid source directory found!"
             Write-Host "Checked paths:"
             foreach ($path in $possiblePaths) {
-              Write-Host "  - $path ($(if (Test-Path $path) {'EXISTS'} else {'NOT FOUND'}))"
+              if (Test-Path $path) {
+                Write-Host "  - $path (EXISTS)"
+              } else {
+                Write-Host "  - $path (NOT FOUND)"
+              }
             }
             exit 1
           }
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
-          Write-Host "`n--- IIS Management (Optional) ---"
+          Write-Host "--- IIS Management (Optional) ---"
           try {
             Import-Module WebAdministration -ErrorAction SilentlyContinue
             
@@ -179,13 +182,13 @@ jobs:
               Start-Sleep -Seconds 5
               Write-Host "✅ Application Pool stopped"
             } else {
-              Write-Host "⚠️  Application Pool '$appPoolName' not found - continuing without IIS management"
+              Write-Host "⚠️ Application Pool '$appPoolName' not found - continuing without IIS management"
             }
           } catch {
-            Write-Host "⚠️  IIS management skipped: $($_.Exception.Message)"
+            Write-Host "⚠️ IIS management skipped: $($_.Exception.Message)"
           }
 
-          Write-Host "`n--- Target Directory Management ---"
+          Write-Host "--- Target Directory Management ---"
           if (-not (Test-Path $targetPath)) {
             Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
@@ -197,10 +200,10 @@ jobs:
             icacls $targetPath /grant "IIS_IUSRS:(OI)(CI)F" /T /C /Q
             Write-Host "✅ Permissions set for $currentUser and IIS_IUSRS"
           } catch {
-            Write-Host "⚠️  Permission warning: $($_.Exception.Message)"
+            Write-Host "⚠️ Permission warning: $($_.Exception.Message)"
           }
 
-          Write-Host "`n--- Smart Cleanup ---"
+          Write-Host "--- Smart Cleanup ---"
           if (Test-Path $targetPath) {
             try {
               $protectedFiles = @("web.config", ".htaccess", "robots.txt", "favicon.ico")
@@ -225,9 +228,7 @@ jobs:
               
               while ($retryCount -lt $maxRetries -and -not $cleanSuccess) {
                 try {
-                  Get-ChildItem -Path $targetPath -Recurse -Force | 
-                    Where-Object { $_.FullName -notlike "*backup*" } |
-                    Remove-Item -Force -Recurse -ErrorAction Stop
+                  Get-ChildItem -Path $targetPath -Recurse -Force | Where-Object { $_.FullName -notlike "*backup*" } | Remove-Item -Force -Recurse -ErrorAction Stop
                   $cleanSuccess = $true
                   Write-Host "✅ Directory cleaned successfully"
                 } catch {
@@ -238,7 +239,7 @@ jobs:
               }
               
               if (-not $cleanSuccess) {
-                Write-Host "⚠️  Could not fully clean directory, but continuing..."
+                Write-Host "⚠️ Could not fully clean directory, but continuing..."
               }
               
               if ((Test-Path $backupPath) -and ($backedUpFiles.Count -gt 0)) {
@@ -248,11 +249,11 @@ jobs:
               }
               
             } catch {
-              Write-Host "⚠️  Cleanup warning: $($_.Exception.Message)"
+              Write-Host "⚠️ Cleanup warning: $($_.Exception.Message)"
             }
           }
 
-          Write-Host "`n--- Smart Copy with ROBOCOPY ---"
+          Write-Host "--- Smart Copy with ROBOCOPY ---"
           $copySuccess = $false
           
           try {
@@ -281,7 +282,7 @@ jobs:
               throw "ROBOCOPY failed with exit code: $robocopyExitCode"
             }
           } catch {
-            Write-Host "⚠️  ROBOCOPY failed: $($_.Exception.Message)"
+            Write-Host "⚠️ ROBOCOPY failed: $($_.Exception.Message)"
             Write-Host "Falling back to PowerShell copy..."
             
             try {
@@ -294,7 +295,7 @@ jobs:
             }
           }
 
-          Write-Host "`n--- Deployment Verification ---"
+          Write-Host "--- Deployment Verification ---"
           if ($copySuccess) {
             try {
               $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
@@ -308,21 +309,21 @@ jobs:
                   $fileSize = (Get-Item $keyFilePath).Length
                   Write-Host "✅ Key file exists: $keyFile ($fileSize bytes)"
                 } else {
-                  Write-Host "⚠️  Key file missing: $keyFile"
+                  Write-Host "⚠️ Key file missing: $keyFile"
                 }
               }
               
-              Write-Host "`nDeployed directory structure:"
+              Write-Host "Deployed directory structure:"
               Get-ChildItem -Path $targetPath -Directory | Select-Object -First 10 | ForEach-Object { 
                 Write-Host "  📁 $($_.Name)" 
               }
               
             } catch {
-              Write-Host "⚠️  Verification warning: $($_.Exception.Message)"
+              Write-Host "⚠️ Verification warning: $($_.Exception.Message)"
             }
           }
 
-          Write-Host "`n--- Restart IIS Services ---"
+          Write-Host "--- Restart IIS Services ---"
           try {
             if ($appPool) {
               Write-Host "Starting Application Pool: $appPoolName"
@@ -334,8 +335,8 @@ jobs:
               Write-Host "✅ Application Pool management completed"
             }
           } catch {
-            Write-Host "⚠️  IIS restart warning: $($_.Exception.Message)"
+            Write-Host "⚠️ IIS restart warning: $($_.Exception.Message)"
           }
           
-          Write-Host "`n🎉 Smart deployment completed successfully!"
+          Write-Host "🎉 Smart deployment completed successfully!"
           Write-Host "Site should be available at your configured IIS endpoint"
