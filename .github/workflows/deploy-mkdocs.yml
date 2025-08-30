@@ -11,7 +11,7 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Debug Environment
+      - name: Debug Environment after changes
         shell: powershell
         run: |
           Write-Host "Current PATH:"
