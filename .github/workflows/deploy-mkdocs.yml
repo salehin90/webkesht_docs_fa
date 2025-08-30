@@ -1,63 +1,111 @@
-# نام Workflow که در تب Actions گیت‌هاب نمایش داده می‌شود
 name: Deploy MkDocs to IIS
 
-# تریگر: این Workflow چه زمانی اجرا شود؟
-# در اینجا، هر زمان که کدی به برنچ main پوش شود
 on:
   push:
     branches:
-      - main  # یا master، بسته به نام برنچ اصلی شما
+      - main
 
-# تعریف کارها (Jobs)
 jobs:
   build-and-deploy:
-    # نام نمایشی Job
-    name: Build and Deploy MkDocs Site V3
-
-    # مهم: مشخص می‌کنیم که این Job باید روی Runner شخصی ما اجرا شود
+    name: Build and Deploy MkDocs Site V4
     runs-on: self-hosted
 
-    # مراحل اجرای Job
     steps:
-      # مرحله 1: دریافت آخرین نسخه کد از ریپازیتوری
-      # این کار کدها را در فضای کاری Runner روی سرور شما دانلود می‌کند
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # مرحله 2: بیلد کردن سایت با دستور mkdocs build
-      # این دستور فایل‌های استاتیک نهایی (HTML, CSS, ...) را می‌سازد
-      # و به طور پیش‌فرض آن‌ها را در پوشه‌ای به نام 'site' در ریشه پروژه قرار می‌دهد
-      - name: Build MkDocs site
-        run: mkdocs build --clean
-        # استفاده از --clean تضمین می‌کند که فایل‌های قدیمی از بیلد قبلی پاک شوند
-
-      # مرحله 3: استقرار فایل‌های ساخته شده در پوشه IIS
-      # این مرحله از PowerShell برای کپی کردن فایل‌ها استفاده می‌کند
-      - name: Deploy to IIS
+      - name: Debug Environment and Build
         shell: powershell
         run: |
-          # مسیر پوشه پابلیش IIS را در این متغیر قرار دهید
+          Write-Host "=== Environment Information ==="
+          Write-Host "Current directory: $(Get-Location)"
+          Write-Host "Python version:"
+          python --version
+          Write-Host "MkDocs version:"
+          python -m mkdocs --version
+          
+          Write-Host "`n=== Project Structure ==="
+          Write-Host "Repository contents:"
+          Get-ChildItem -Path "${{ github.workspace }}" -Recurse | Select-Object Name, FullName | Format-Table -AutoSize
+          
+          Write-Host "`n=== MkDocs Configuration Check ==="
+          $configFile = "${{ github.workspace }}\mkdocs.yml"
+          if (Test-Path $configFile) {
+            Write-Host "mkdocs.yml found. Contents:"
+            Get-Content $configFile
+          } else {
+            Write-Host "ERROR: mkdocs.yml not found in repository root"
+            Write-Host "Available files in root:"
+            Get-ChildItem -Path "${{ github.workspace }}" | Select-Object Name, FullName | Format-Table -AutoSize
+          }
+          
+          Write-Host "`n=== Attempting MkDocs Build ==="
+          try {
+            Set-Location "${{ github.workspace }}"
+            Write-Host "Building MkDocs site..."
+            python -m mkdocs build --clean --verbose 2>&1 | Tee-Object -Variable buildOutput
+            Write-Host "Build output: $buildOutput"
+            
+            if ($LASTEXITCODE -eq 0) {
+              Write-Host "Build successful!"
+              
+              Write-Host "`nBuild output structure:"
+              if (Test-Path "${{ github.workspace }}\site") {
+                Get-ChildItem -Path "${{ github.workspace }}\site" -Recurse | Select-Object Name, FullName | Format-Table -AutoSize
+              } else {
+                Write-Host "ERROR: Site directory not created"
+              }
+            } else {
+              Write-Host "ERROR: Build failed with exit code $LASTEXITCODE"
+              Write-Host "Build output: $buildOutput"
+              exit 1
+            }
+          } catch {
+            Write-Host "ERROR: Exception during build - $($_.Exception.Message)"
+            Write-Host "Exception details: $($_.Exception)"
+            exit 1
+          }
+
+      - name: Deploy to IIS
+        if: success()
+        shell: powershell
+        run: |
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           
-          # مسیر پوشه خروجی بیلد MkDocs (که به صورت پیش‌فرض 'site' است)
-          # ${{ github.workspace }} به مسیر کاری Runner اشاره دارد که کدها در آن checkout شده‌اند
-          $sourcePath = "${{ github.workspace }}\site\fa"
+          # بررسی ساختار site directory
+          Write-Host "=== Checking build output ==="
+          $siteDir = "${{ github.workspace }}\site"
+          if (Test-Path $siteDir) {
+            Write-Host "Site directory contents:"
+            Get-ChildItem -Path $siteDir -Recurse | Select-Object Name, FullName | Format-Table -AutoSize
+            
+            # بررسی وجود پوشه fa
+            $sourcePath = "$siteDir\fa"
+            if (Test-Path $sourcePath) {
+              Write-Host "Found FA directory: $sourcePath"
+            } else {
+              Write-Host "FA directory not found, using site root: $siteDir"
+              $sourcePath = $siteDir
+            }
+          } else {
+            Write-Host "ERROR: Site directory not found"
+            exit 1
+          }
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
-          # بررسی وجود پوشه مقصد و ایجاد آن در صورت نیاز
           if (-not (Test-Path $targetPath)) {
-            Write-Host "Target directory does not exist. Creating..."
+            Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
           }
 
-          # پاک‌سازی کامل پوشه مقصد قبل از کپی کردن فایل‌های جدید
-          # این کار برای حذف فایل‌هایی که ممکن است در سورس جدید حذف شده باشند، ضروری است
           Write-Host "Cleaning target directory..."
-          Get-ChildItem -Path $targetPath -Recurse | Remove-Item -force -recurse
+          Get-ChildItem -Path $targetPath -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
 
-          # کپی کردن محتویات پوشه 'site' به پوشه IIS
-          Write-Host "Copying new files..."
+          Write-Host "Copying files..."
           Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
 
           Write-Host "Deployment completed successfully!"
+          
+          Write-Host "`nFinal deployment verification:"
+          Get-ChildItem -Path $targetPath | Select-Object Name, LastWriteTime | Format-Table -AutoSize
