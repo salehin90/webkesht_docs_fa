@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Enhanced Version V4
+name: Deploy MkDocs to IIS - Enhanced Version V4-FIXED
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy MkDocs Site Enhanced V3
+    name: Build and Deploy MkDocs Site Enhanced V4
     runs-on: self-hosted
 
     steps:
@@ -101,9 +101,7 @@ jobs:
               Write-Host "Generated files count: $($siteFiles.Count)"
               
               Write-Host "Site directory structure:"
-              Get-ChildItem -Path "site" -Directory | ForEach-Object { 
-                Write-Host "  📁 $($_.Name)" 
-              }
+              Get-ChildItem -Path "site" -Directory | ForEach-Object { Write-Host "  📁 $($_.Name)" }
               
               if (Test-Path "site\fa") {
                 Write-Host "✅ FA-specific build directory found: site\fa"
@@ -140,11 +138,7 @@ jobs:
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           
           $sourcePath = ""
-          $possiblePaths = @(
-            "${{ github.workspace }}\site\fa",
-            "${{ github.workspace }}\site\ar", 
-            "${{ github.workspace }}\site"
-          )
+          $possiblePaths = @("${{ github.workspace }}\site\fa", "${{ github.workspace }}\site\ar", "${{ github.workspace }}\site")
           
           foreach ($path in $possiblePaths) {
             if (Test-Path $path) {
@@ -257,17 +251,7 @@ jobs:
           $copySuccess = $false
           
           try {
-            $robocopyArgs = @(
-              "`"$sourcePath`"",
-              "`"$targetPath`"",
-              "/E",
-              "/R:2",
-              "/W:3",
-              "/MT:2",
-              "/XO",
-              "/NFL",
-              "/NDL"
-            )
+            $robocopyArgs = @("`"$sourcePath`"", "`"$targetPath`"", "/E", "/R:2", "/W:3", "/MT:2", "/XO", "/NFL", "/NDL")
             
             $robocopyCmd = "robocopy " + ($robocopyArgs -join " ")
             Write-Host "Running: $robocopyCmd"
@@ -314,9 +298,7 @@ jobs:
               }
               
               Write-Host "Deployed directory structure:"
-              Get-ChildItem -Path $targetPath -Directory | Select-Object -First 10 | ForEach-Object { 
-                Write-Host "  📁 $($_.Name)" 
-              }
+              Get-ChildItem -Path $targetPath -Directory | Select-Object -First 10 | ForEach-Object { Write-Host "  📁 $($_.Name)" }
               
             } catch {
               Write-Host "⚠️ Verification warning: $($_.Exception.Message)"
