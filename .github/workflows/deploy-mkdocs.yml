@@ -28,7 +28,7 @@ jobs:
       # این دستور فایل‌های استاتیک نهایی (HTML, CSS, ...) را می‌سازد
       # و به طور پیش‌فرض آن‌ها را در پوشه‌ای به نام 'site' در ریشه پروژه قرار می‌دهد
       - name: Build MkDocs site
-        run: C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python312\\Scripts\\mkdocs.exe build --clean
+        run:  mkdocs build --clean
 
         # استفاده از --clean تضمین می‌کند که فایل‌های قدیمی از بیلد قبلی پاک شوند
 
