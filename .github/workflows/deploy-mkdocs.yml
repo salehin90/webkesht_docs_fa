@@ -11,40 +11,14 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Build MkDocs site
+      - name: Debug Environment
         shell: powershell
         run: |
-          # تنظیم PATH برای Python و Scripts
-          $env:PATH = "C:\Users\Administrator\AppData\Local\Programs\Python\Python313;C:\Users\Administrator\AppData\Local\Programs\Python\Python313\Scripts;" + $env:PATH
+          Write-Host "Current PATH:"
+          $env:PATH -split ';' | ForEach-Object { Write-Host $_ }
           
-          # بررسی در دسترس بودن mkdocs
-          Write-Host "Checking mkdocs availability..."
-          Get-Command mkdocs -ErrorAction SilentlyContinue
+          Write-Host "`nPython version:"
+          python --version
           
-          # اجرای mkdocs build
-          Write-Host "Building MkDocs site..."
-          & mkdocs build --clean
-
-      - name: Deploy to IIS
-        shell: powershell
-        run: |
-          $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
-          $sourcePath = "${{ github.workspace }}\site"
-
-          Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
-
-          if (-not (Test-Path $targetPath)) {
-            Write-Host "Target directory does not exist. Creating..."
-            New-Item -ItemType Directory -Force -Path $targetPath
-          }
-
-          Write-Host "Cleaning target directory..."
-          Get-ChildItem -Path $targetPath -Recurse | Remove-Item -force -recurse
-
-          Write-Host "Copying new files..."
-          Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
-
-          Write-Host "Deployment completed successfully!"
+          Write-Host "`nChecking mkdocs:"
+          python -m mkdocs --version
