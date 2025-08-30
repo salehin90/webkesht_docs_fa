@@ -1,29 +1,19 @@
-# نام Workflow که در تب Actions گیت‌هاب نمایش داده می‌شود
-name: Deploy MkDocs to IIS - Enhanced Version V3
+name: Deploy MkDocs to IIS - Enhanced Version V3-Fixed
 
-# تریگر: این Workflow چه زمانی اجرا شود؟
-# در اینجا، هر زمان که کدی به برنچ main پوش شود
 on:
   push:
     branches:
-      - main  # یا master، بسته به نام برنچ اصلی شما
+      - main
 
-# تعریف کارها (Jobs)
 jobs:
   build-and-deploy:
-    # نام نمایشی Job
     name: Build and Deploy MkDocs Site Enhanced V3
-
-    # مهم: مشخص می‌کنیم که این Job باید روی Runner شخصی ما اجرا شود
     runs-on: self-hosted
 
-    # مراحل اجرای Job
     steps:
-      # مرحله 1: دریافت آخرین نسخه کد از ریپازیتوری
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # مرحله 2: بررسی محیط و آماده‌سازی
       - name: Environment Check & Preparation
         shell: powershell
         run: |
@@ -31,7 +21,6 @@ jobs:
           Set-Location "${{ github.workspace }}"
           Write-Host "Current directory: $(Get-Location)"
           
-          # بررسی فایل mkdocs.yml
           if (Test-Path "mkdocs.yml") {
             Write-Host "✅ mkdocs.yml found"
           } else {
@@ -39,14 +28,12 @@ jobs:
             exit 1
           }
           
-          # بررسی و ایجاد پوشه‌های مورد نیاز
           $requiredDirs = @("docs", "overrides", "stylesheets")
           foreach ($dir in $requiredDirs) {
             if (-not (Test-Path $dir)) {
               Write-Host "Creating missing directory: $dir"
               New-Item -ItemType Directory -Name $dir -Force
               
-              # اضافه کردن فایل‌های پیش‌فرض در صورت نیاز
               if ($dir -eq "docs" -and -not (Test-Path "docs\index.md")) {
                 "# Welcome`n`nThis is the homepage." | Out-File -FilePath "docs\index.md" -Encoding UTF8
               }
@@ -58,7 +45,6 @@ jobs:
             }
           }
 
-      # مرحله 3: تست MkDocs قبل از بیلد اصلی - نسخه بهبود یافته
       - name: Test MkDocs Configuration
         shell: powershell
         run: |
@@ -66,15 +52,12 @@ jobs:
           
           Write-Host "=== Testing MkDocs Configuration ==="
           
-          # تست version
           Write-Host "MkDocs version:"
           python -m mkdocs --version
           
-          # تست ساده‌تر بدون PyYAML - فقط اعتبارسنجی MkDocs
           Write-Host "`nTesting MkDocs configuration directly..."
           
           try {
-            # بجای پارس کردن YAML خودمان، از خود MkDocs استفاده می‌کنیم
             Write-Host "Testing MkDocs config validation..."
             python -m mkdocs config
             
@@ -84,7 +67,6 @@ jobs:
               Write-Host "⚠️  MkDocs config validation returned non-zero code but continuing..."
             }
             
-            # تست اضافی: بررسی syntax
             Write-Host "`nTesting configuration syntax with MkDocs serve (dry-run)..."
             $testResult = python -m mkdocs serve --help 2>&1
             Write-Host "✅ MkDocs commands are accessible"
@@ -94,7 +76,6 @@ jobs:
             Write-Host "Continuing with build process..."
           }
 
-      # مرحله 4: بیلد کردن سایت با دستور mkdocs build
       - name: Build MkDocs Site
         shell: powershell
         run: |
@@ -102,11 +83,8 @@ jobs:
           
           Write-Host "=== Building MkDocs Site ==="
           
-          # تنظیم environment variables برای UTF-8
           $env:PYTHONIOENCODING = "utf-8"
           $env:LANG = "en_US.UTF-8"
-          
-          # اضافه کردن تنظیمات اضافی برای materialx
           $env:PYTHONPATH = "$env:PYTHONPATH;C:\Python313\Lib\site-packages"
           
           Write-Host "Running: python -m mkdocs build --clean --verbose"
@@ -115,21 +93,19 @@ jobs:
           $buildExitCode = $LASTEXITCODE
           Write-Host "Build exit code: $buildExitCode"
           
+          # تصحیح شده: بلوک if با آکولادهای صحیح
           if ($buildExitCode -eq 0) {
             Write-Host "✅ Build successful!"
             
-            # بررسی ایجاد شدن فایل‌های خروجی
             if (Test-Path "site") {
               $siteFiles = Get-ChildItem -Path "site" -Recurse -File
               Write-Host "Generated files count: $($siteFiles.Count)"
               
-              # نمایش ساختار فایل برای debug
               Write-Host "`nSite directory structure:"
               Get-ChildItem -Path "site" -Directory | ForEach-Object { 
                 Write-Host "  📁 $($_.Name)" 
               }
               
-              # تشخیص مسیر صحیح source
               if (Test-Path "site\fa") {
                 Write-Host "✅ FA-specific build directory found: site\fa"
               } elseif (Test-Path "site\ar") {
@@ -140,7 +116,6 @@ jobs:
             } else {
               Write-Host "❌ Site directory not created!"
               
-              # Debug: نمایش محتویات دایرکتوری فعلی
               Write-Host "`nCurrent directory contents:"
               Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" }
               exit 1
@@ -149,7 +124,6 @@ jobs:
             Write-Host "❌ Build failed!"
             Write-Host "`nTrying to show more detailed error information..."
             
-            # تلاش برای نمایش جزئیات بیشتر خطا
             try {
               python -m mkdocs build --verbose --strict 2>&1 | Write-Host
             } catch {
@@ -159,16 +133,13 @@ jobs:
             exit $buildExitCode
           }
 
-      # مرحله 5: استقرار هوشمند در IIS
       - name: Smart Deploy to IIS
         shell: powershell
         run: |
           Write-Host "=== Smart IIS Deployment ==="
           
-          # تنظیم مسیرها
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           
-          # تشخیص مسیر صحیح source با بررسی بیشتر
           $sourcePath = ""
           $possiblePaths = @(
             "${{ github.workspace }}\site\fa",
@@ -195,7 +166,6 @@ jobs:
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
-          # === مرحله 1: مدیریت IIS (اختیاری) ===
           Write-Host "`n--- IIS Management (Optional) ---"
           try {
             Import-Module WebAdministration -ErrorAction SilentlyContinue
@@ -215,14 +185,12 @@ jobs:
             Write-Host "⚠️  IIS management skipped: $($_.Exception.Message)"
           }
 
-          # === مرحله 2: ایجاد و تنظیم مجوزهای پوشه مقصد ===
           Write-Host "`n--- Target Directory Management ---"
           if (-not (Test-Path $targetPath)) {
             Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
           }
           
-          # تنظیم مجوزها
           try {
             $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
             icacls $targetPath /grant "${currentUser}:(OI)(CI)F" /T /C /Q
@@ -232,15 +200,12 @@ jobs:
             Write-Host "⚠️  Permission warning: $($_.Exception.Message)"
           }
 
-          # === مرحله 3: پاکسازی هوشمند ===
           Write-Host "`n--- Smart Cleanup ---"
           if (Test-Path $targetPath) {
             try {
-              # محافظت از فایل‌های مهم سیستم (اگر وجود دارند)
               $protectedFiles = @("web.config", ".htaccess", "robots.txt", "favicon.ico")
               $backupPath = "$env:TEMP\iis_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
               
-              # بکاپ فایل‌های محافظت شده
               $backedUpFiles = @()
               foreach ($protectedFile in $protectedFiles) {
                 $filePath = Join-Path $targetPath $protectedFile
@@ -254,7 +219,6 @@ jobs:
                 }
               }
               
-              # پاکسازی با retry mechanism
               $maxRetries = 3
               $retryCount = 0
               $cleanSuccess = $false
@@ -277,7 +241,6 @@ jobs:
                 Write-Host "⚠️  Could not fully clean directory, but continuing..."
               }
               
-              # بازگردانی فایل‌های محافظت شده
               if ((Test-Path $backupPath) -and ($backedUpFiles.Count -gt 0)) {
                 Copy-Item "$backupPath\*" $targetPath -Force -ErrorAction SilentlyContinue
                 Remove-Item $backupPath -Recurse -Force -ErrorAction SilentlyContinue
@@ -289,7 +252,6 @@ jobs:
             }
           }
 
-          # === مرحله 4: کپی هوشمند با ROBOCOPY ===
           Write-Host "`n--- Smart Copy with ROBOCOPY ---"
           $copySuccess = $false
           
@@ -297,13 +259,13 @@ jobs:
             $robocopyArgs = @(
               "`"$sourcePath`"",
               "`"$targetPath`"",
-              "/E",           # کپی subdirectories
-              "/R:2",         # 2 retry
-              "/W:3",         # 3 second wait
-              "/MT:2",        # multi-threaded
-              "/XO",          # exclude older files
-              "/NFL",         # no file list
-              "/NDL"          # no directory list
+              "/E",
+              "/R:2",
+              "/W:3",
+              "/MT:2",
+              "/XO",
+              "/NFL",
+              "/NDL"
             )
             
             $robocopyCmd = "robocopy " + ($robocopyArgs -join " ")
@@ -312,7 +274,6 @@ jobs:
             & cmd.exe /c $robocopyCmd
             $robocopyExitCode = $LASTEXITCODE
             
-            # ROBOCOPY success codes: 0-7 are typically successful
             if ($robocopyExitCode -le 7) {
               Write-Host "✅ ROBOCOPY completed successfully (exit code: $robocopyExitCode)"
               $copySuccess = $true
@@ -333,7 +294,6 @@ jobs:
             }
           }
 
-          # === مرحله 5: بررسی نتیجه ===
           Write-Host "`n--- Deployment Verification ---"
           if ($copySuccess) {
             try {
@@ -341,7 +301,6 @@ jobs:
               Write-Host "✅ Deployment successful!"
               Write-Host "Total files deployed: $($deployedFiles.Count)"
               
-              # بررسی فایل‌های کلیدی
               $keyFiles = @("index.html", "404.html")
               foreach ($keyFile in $keyFiles) {
                 $keyFilePath = Join-Path $targetPath $keyFile
@@ -353,7 +312,6 @@ jobs:
                 }
               }
               
-              # نمایش ساختار کلی
               Write-Host "`nDeployed directory structure:"
               Get-ChildItem -Path $targetPath -Directory | Select-Object -First 10 | ForEach-Object { 
                 Write-Host "  📁 $($_.Name)" 
@@ -364,7 +322,6 @@ jobs:
             }
           }
 
-          # === مرحله 6: راه‌اندازی مجدد IIS ===
           Write-Host "`n--- Restart IIS Services ---"
           try {
             if ($appPool) {
@@ -372,8 +329,7 @@ jobs:
               Start-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
               Start-Sleep -Seconds 3
               
-              # بررسی وضعیت App Pool
-              $appPoolSta = (Get-WebAppPoolState -Name $appPoolName).Value
+              $appPoolState = (Get-WebAppPoolState -Name $appPoolName).Value
               Write-Host "Application Pool state: $appPoolState"
               Write-Host "✅ Application Pool management completed"
             }
@@ -381,5 +337,5 @@ jobs:
             Write-Host "⚠️  IIS restart warning: $($_.Exception.Message)"
           }
           
-          Write-Host "`n🎉 Smart deployment completd successfully!"
+          Write-Host "`n🎉 Smart deployment completed successfully!"
           Write-Host "Site should be available at your configured IIS endpoint"
