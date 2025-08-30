@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Debug Fixed V4
+name: Deploy MkDocs to IIS - Debug Fixed V5
 
 on:
   push:
@@ -37,12 +37,11 @@ jobs:
           Write-Host "=== Testing Basic MkDocs Commands ==="
           
           Write-Host "Testing mkdocs version:"
-          & python -m mkdocs --version
+          python -m mkdocs --version
           Write-Host "Version test completed with exit code: $LASTEXITCODE"
           
           Write-Host "`nTesting mkdocs help (first few lines):"
-          $helpOutput = & python -m mkdocs --help 2>&1
-          $helpOutput | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
+          python -m mkdocs --help | Select-Object -First 10
           Write-Host "Help test completed with exit code: $LASTEXITCODE"
           
           Write-Host "`nMkDocs commands test completed successfully!"
@@ -66,7 +65,7 @@ jobs:
           
           $pythonCode | Out-File -FilePath "test_yaml.py" -Encoding UTF8
           
-          & python test_yaml.py
+          python test_yaml.py
           Write-Host "YAML parsing test completed with exit code: $LASTEXITCODE"
           
           Remove-Item "test_yaml.py" -ErrorAction SilentlyContinue
@@ -96,12 +95,13 @@ jobs:
           Get-Content "mkdocs_test.yml" | ForEach-Object { Write-Host "  $_" }
           
           Write-Host "`nTesting with minimal configuration:"
-          $output = & python -m mkdocs build --config-file mkdocs_test.yml --verbose 2>&1
+          
+          # اجرای دستور بدون capture کردن output
+          Write-Host "Running: python -m mkdocs build --config-file mkdocs_test.yml --verbose"
+          python -m mkdocs build --config-file mkdocs_test.yml --verbose
           $exitCode = $LASTEXITCODE
           
-          Write-Host "Exit Code: $exitCode"
-          Write-Host "Output:"
-          $output | ForEach-Object { Write-Host "  $_" }
+          Write-Host "`nExit Code: $exitCode"
           
           if ($exitCode -eq 0) {
             Write-Host "Minimal config test PASSED"
@@ -165,14 +165,13 @@ jobs:
           $env:LANG = "en_US.UTF-8"
           
           Write-Host "Running mkdocs build with verbose output..."
+          Write-Host "Command: python -m mkdocs build --clean --verbose"
           
-          # اجرای دستور و گرفتن خروجی
-          $buildOutput = & python -m mkdocs build --clean --verbose 2>&1
+          # اجرای دستور بدون capture کردن output
+          python -m mkdocs build --clean --verbose
           $exitCode = $LASTEXITCODE
           
-          Write-Host "Process exit code: $exitCode"
-          Write-Host "`nBuild Output:"
-          $buildOutput | ForEach-Object { Write-Host "  $_" }
+          Write-Host "`nProcess exit code: $exitCode"
           
           if ($exitCode -eq 0) {
             Write-Host "`n=== Build Successful ==="
