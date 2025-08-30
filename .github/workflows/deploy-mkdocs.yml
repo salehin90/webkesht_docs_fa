@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS
+name: Deploy MkDocs to IIS - UTF8 Test
 
 on:
   push:
@@ -7,62 +7,56 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy MkDocs Site V4
+    name: Build and Deploy MkDocs Site - UTF8 Test
     runs-on: self-hosted
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Debug Environment and Build
+      - name: Fix Encoding and Test Build
         shell: powershell
         run: |
-          Write-Host "=== Environment Information ==="
-          Write-Host "Current directory: $(Get-Location)"
-          Write-Host "Python version:"
-          python --version
-          Write-Host "MkDocs version:"
-          python -m mkdocs --version
+          Write-Host "=== Testing MkDocs Configuration ==="
           
-          Write-Host "`n=== Project Structure ==="
-          Write-Host "Repository contents:"
-          Get-ChildItem -Path "${{ github.workspace }}" -Recurse | Select-Object Name, FullName | Format-Table -AutoSize
+          # تست خواندن فایل با encoding مختلف
+          $configPath = "${{ github.workspace }}\mkdocs.yml"
           
-          Write-Host "`n=== MkDocs Configuration Check ==="
-          $configFile = "${{ github.workspace }}\mkdocs.yml"
-          if (Test-Path $configFile) {
-            Write-Host "mkdocs.yml found. Contents:"
-            Get-Content $configFile
-          } else {
-            Write-Host "ERROR: mkdocs.yml not found in repository root"
-            Write-Host "Available files in root:"
-            Get-ChildItem -Path "${{ github.workspace }}" | Select-Object Name, FullName | Format-Table -AutoSize
+          Write-Host "Reading mkdocs.yml with UTF-8 encoding:"
+          try {
+            $content = Get-Content -Path $configPath -Encoding UTF8
+            $content | ForEach-Object { Write-Host $_ }
+          } catch {
+            Write-Host "Error reading with UTF-8: $($_.Exception.Message)"
           }
           
-          Write-Host "`n=== Attempting MkDocs Build ==="
-          try {
-            Set-Location "${{ github.workspace }}"
-            Write-Host "Building MkDocs site..."
+          Write-Host "`n=== Testing MkDocs Build ==="
+          Set-Location "${{ github.workspace }}"
+          
+          # تست ساده mkdocs
+          Write-Host "Testing mkdocs config validation:"
+          python -m mkdocs config 2>&1 | Tee-Object -Variable configOutput
+          Write-Host "Config output: $configOutput"
+          
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Configuration is valid, attempting build..."
             python -m mkdocs build --clean --verbose 2>&1 | Tee-Object -Variable buildOutput
             Write-Host "Build output: $buildOutput"
             
             if ($LASTEXITCODE -eq 0) {
               Write-Host "Build successful!"
               
-              Write-Host "`nBuild output structure:"
+              # نمایش ساختار فایل‌های ساخته شده
               if (Test-Path "${{ github.workspace }}\site") {
-                Get-ChildItem -Path "${{ github.workspace }}\site" -Recurse | Select-Object Name, FullName | Format-Table -AutoSize
-              } else {
-                Write-Host "ERROR: Site directory not created"
+                Write-Host "`nBuild output contents:"
+                Get-ChildItem -Path "${{ github.workspace }}\site" -Recurse | Select-Object Name, FullName
               }
             } else {
-              Write-Host "ERROR: Build failed with exit code $LASTEXITCODE"
-              Write-Host "Build output: $buildOutput"
+              Write-Host "Build failed with exit code $LASTEXITCODE"
               exit 1
             }
-          } catch {
-            Write-Host "ERROR: Exception during build - $($_.Exception.Message)"
-            Write-Host "Exception details: $($_.Exception)"
+          } else {
+            Write-Host "Configuration validation failed with exit code $LASTEXITCODE"
             exit 1
           }
 
@@ -71,41 +65,24 @@ jobs:
         shell: powershell
         run: |
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
-          
-          # بررسی ساختار site directory
-          Write-Host "=== Checking build output ==="
-          $siteDir = "${{ github.workspace }}\site"
-          if (Test-Path $siteDir) {
-            Write-Host "Site directory contents:"
-            Get-ChildItem -Path $siteDir -Recurse | Select-Object Name, FullName | Format-Table -AutoSize
-            
-            # بررسی وجود پوشه fa
-            $sourcePath = "$siteDir\fa"
-            if (Test-Path $sourcePath) {
-              Write-Host "Found FA directory: $sourcePath"
-            } else {
-              Write-Host "FA directory not found, using site root: $siteDir"
-              $sourcePath = $siteDir
-            }
-          } else {
-            Write-Host "ERROR: Site directory not found"
-            exit 1
-          }
+          $sourcePath = "${{ github.workspace }}\site\fa"
 
           Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
 
+          if (-not (Test-Path $sourcePath)) {
+            Write-Host "Source path not found: $sourcePath"
+            Write-Host "Available paths in site directory:"
+            Get-ChildItem -Path "${{ github.workspace }}\site" -Recurse | Select-Object FullName
+            
+            # اگر fa وجود نداشت، از site اصلی استفاده کن
+            $sourcePath = "${{ github.workspace }}\site"
+          }
+
           if (-not (Test-Path $targetPath)) {
-            Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
           }
 
-          Write-Host "Cleaning target directory..."
           Get-ChildItem -Path $targetPath -Recurse -ErrorAction SilentlyContinue | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue
-
-          Write-Host "Copying files..."
           Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
 
           Write-Host "Deployment completed successfully!"
-          
-          Write-Host "`nFinal deployment verification:"
-          Get-ChildItem -Path $targetPath | Select-Object Name, LastWriteTime | Format-Table -AutoSize
