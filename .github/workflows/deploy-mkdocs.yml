@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Enhanced Version V4-FIXED
+name: Deploy MkDocs to IIS - Simple Version
 
 on:
   push:
@@ -7,14 +7,14 @@ on:
 
 jobs:
   build-and-deploy:
-    name: Build and Deploy MkDocs Site Enhanced V4
+    name: Build and Deploy MkDocs Site
     runs-on: self-hosted
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Environment Check & Preparation
+      - name: Environment Check
         shell: powershell
         run: |
           Write-Host "=== Environment Check ==="
@@ -22,58 +22,10 @@ jobs:
           Write-Host "Current directory: $(Get-Location)"
           
           if (Test-Path "mkdocs.yml") {
-            Write-Host "✅ mkdocs.yml found"
+            Write-Host "mkdocs.yml found"
           } else {
-            Write-Host "❌ mkdocs.yml not found!"
+            Write-Host "mkdocs.yml not found"
             exit 1
-          }
-          
-          $requiredDirs = @("docs", "overrides", "stylesheets")
-          foreach ($dir in $requiredDirs) {
-            if (-not (Test-Path $dir)) {
-              Write-Host "Creating missing directory: $dir"
-              New-Item -ItemType Directory -Name $dir -Force
-              
-              if ($dir -eq "docs" -and -not (Test-Path "docs\index.md")) {
-                "# Welcome`n`nThis is the homepage." | Out-File -FilePath "docs\index.md" -Encoding UTF8
-              }
-              if ($dir -eq "stylesheets" -and -not (Test-Path "stylesheets\custom.css")) {
-                "/* Custom CSS */" | Out-File -FilePath "stylesheets\custom.css" -Encoding UTF8
-              }
-            } else {
-              Write-Host "✅ Directory exists: $dir"
-            }
-          }
-
-      - name: Test MkDocs Configuration
-        shell: powershell
-        run: |
-          Set-Location "${{ github.workspace }}"
-          
-          Write-Host "=== Testing MkDocs Configuration ==="
-          
-          Write-Host "MkDocs version:"
-          python -m mkdocs --version
-          
-          Write-Host "Testing MkDocs configuration directly..."
-          
-          try {
-            Write-Host "Testing MkDocs config validation..."
-            python -m mkdocs config
-            
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "✅ MkDocs configuration is valid!"
-            } else {
-              Write-Host "⚠️ MkDocs config validation returned non-zero code but continuing..."
-            }
-            
-            Write-Host "Testing configuration syntax with MkDocs serve (dry-run)..."
-            $testResult = python -m mkdocs serve --help 2>&1
-            Write-Host "✅ MkDocs commands are accessible"
-            
-          } catch {
-            Write-Host "⚠️ Configuration test warning: $($_.Exception.Message)"
-            Write-Host "Continuing with build process..."
           }
 
       - name: Build MkDocs Site
@@ -85,240 +37,111 @@ jobs:
           
           $env:PYTHONIOENCODING = "utf-8"
           $env:LANG = "en_US.UTF-8"
-          $env:PYTHONPATH = "$env:PYTHONPATH;C:\Python313\Lib\site-packages"
           
-          Write-Host "Running: python -m mkdocs build --clean --verbose"
+          Write-Host "Running mkdocs build"
           python -m mkdocs build --clean --verbose
           
           $buildExitCode = $LASTEXITCODE
           Write-Host "Build exit code: $buildExitCode"
           
           if ($buildExitCode -eq 0) {
-            Write-Host "✅ Build successful!"
-            
+            Write-Host "Build successful"
             if (Test-Path "site") {
-              $siteFiles = Get-ChildItem -Path "site" -Recurse -File
-              Write-Host "Generated files count: $($siteFiles.Count)"
-              
-              Write-Host "Site directory structure:"
-              Get-ChildItem -Path "site" -Directory | ForEach-Object { Write-Host "  📁 $($_.Name)" }
-              
-              if (Test-Path "site\fa") {
-                Write-Host "✅ FA-specific build directory found: site\fa"
-              } elseif (Test-Path "site\ar") {
-                Write-Host "✅ AR-specific build directory found: site\ar"
-              } else {
-                Write-Host "✅ Using main site directory: site"
-              }
+              Write-Host "Site directory created"
             } else {
-              Write-Host "❌ Site directory not created!"
-              
-              Write-Host "Current directory contents:"
-              Get-ChildItem | ForEach-Object { Write-Host "  $($_.Name)" }
+              Write-Host "Site directory not found"
               exit 1
             }
           } else {
-            Write-Host "❌ Build failed!"
-            Write-Host "Trying to show more detailed error information..."
-            
-            try {
-              python -m mkdocs build --verbose --strict 2>&1 | Write-Host
-            } catch {
-              Write-Host "Could not get detailed error info"
-            }
-            
+            Write-Host "Build failed"
             exit $buildExitCode
           }
 
-      - name: Smart Deploy to IIS
+      - name: Deploy to IIS
         shell: powershell
         run: |
-          Write-Host "=== Smart IIS Deployment ==="
+          Write-Host "=== IIS Deployment ==="
           
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
+          $sourcePath = "${{ github.workspace }}\site"
           
-          $sourcePath = ""
-          $possiblePaths = @("${{ github.workspace }}\site\fa", "${{ github.workspace }}\site\ar", "${{ github.workspace }}\site")
-          
-          foreach ($path in $possiblePaths) {
-            if (Test-Path $path) {
-              $sourcePath = $path
-              Write-Host "✅ Using build directory: $sourcePath"
-              break
-            }
+          # Check for language specific directories
+          if (Test-Path "${{ github.workspace }}\site\fa") {
+            $sourcePath = "${{ github.workspace }}\site\fa"
+            Write-Host "Using FA directory"
+          } elseif (Test-Path "${{ github.workspace }}\site\ar") {
+            $sourcePath = "${{ github.workspace }}\site\ar"
+            Write-Host "Using AR directory"
+          } else {
+            Write-Host "Using main site directory"
           }
           
-          if (-not $sourcePath) {
-            Write-Host "❌ No valid source directory found!"
-            Write-Host "Checked paths:"
-            foreach ($path in $possiblePaths) {
-              if (Test-Path $path) {
-                Write-Host "  - $path (EXISTS)"
-              } else {
-                Write-Host "  - $path (NOT FOUND)"
-              }
-            }
-            exit 1
-          }
-
-          Write-Host "Deploying from '$sourcePath' to '$targetPath'..."
-
-          Write-Host "--- IIS Management (Optional) ---"
+          Write-Host "Source: $sourcePath"
+          Write-Host "Target: $targetPath"
+          
+          # Stop IIS App Pool if exists
           try {
             Import-Module WebAdministration -ErrorAction SilentlyContinue
-            
             $appPoolName = "webkesht_docs"
-            $appPool = Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue
-            
-            if ($appPool) {
-              Write-Host "Stopping Application Pool: $appPoolName"
+            if (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue) {
               Stop-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
-              Start-Sleep -Seconds 5
-              Write-Host "✅ Application Pool stopped"
-            } else {
-              Write-Host "⚠️ Application Pool '$appPoolName' not found - continuing without IIS management"
+              Start-Sleep -Seconds 3
+              Write-Host "App pool stopped"
             }
           } catch {
-            Write-Host "⚠️ IIS management skipped: $($_.Exception.Message)"
+            Write-Host "IIS management skipped"
           }
-
-          Write-Host "--- Target Directory Management ---"
+          
+          # Create target directory
           if (-not (Test-Path $targetPath)) {
-            Write-Host "Creating target directory..."
             New-Item -ItemType Directory -Force -Path $targetPath
+            Write-Host "Target directory created"
           }
           
+          # Clean target directory
           try {
-            $currentUser = [System.Security.Principal.WindowsIdentity]::GetCurrent().Name
-            icacls $targetPath /grant "${currentUser}:(OI)(CI)F" /T /C /Q
-            icacls $targetPath /grant "IIS_IUSRS:(OI)(CI)F" /T /C /Q
-            Write-Host "✅ Permissions set for $currentUser and IIS_IUSRS"
+            Remove-Item -Path "$targetPath\*" -Recurse -Force -ErrorAction Stop
+            Write-Host "Target directory cleaned"
           } catch {
-            Write-Host "⚠️ Permission warning: $($_.Exception.Message)"
+            Write-Host "Clean failed, continuing"
           }
-
-          Write-Host "--- Smart Cleanup ---"
-          if (Test-Path $targetPath) {
-            try {
-              $protectedFiles = @("web.config", ".htaccess", "robots.txt", "favicon.ico")
-              $backupPath = "$env:TEMP\iis_backup_$(Get-Date -Format 'yyyyMMdd_HHmmss')"
-              
-              $backedUpFiles = @()
-              foreach ($protectedFile in $protectedFiles) {
-                $filePath = Join-Path $targetPath $protectedFile
-                if (Test-Path $filePath) {
-                  if (-not (Test-Path $backupPath)) {
-                    New-Item -ItemType Directory -Force -Path $backupPath
-                  }
-                  Copy-Item $filePath "$backupPath\$protectedFile" -Force
-                  $backedUpFiles += $protectedFile
-                  Write-Host "Backed up: $protectedFile"
-                }
-              }
-              
-              $maxRetries = 3
-              $retryCount = 0
-              $cleanSuccess = $false
-              
-              while ($retryCount -lt $maxRetries -and -not $cleanSuccess) {
-                try {
-                  Get-ChildItem -Path $targetPath -Recurse -Force | Where-Object { $_.FullName -notlike "*backup*" } | Remove-Item -Force -Recurse -ErrorAction Stop
-                  $cleanSuccess = $true
-                  Write-Host "✅ Directory cleaned successfully"
-                } catch {
-                  $retryCount++
-                  Write-Host "Cleanup retry $retryCount/$maxRetries... ($($_.Exception.Message))"
-                  Start-Sleep -Seconds 3
-                }
-              }
-              
-              if (-not $cleanSuccess) {
-                Write-Host "⚠️ Could not fully clean directory, but continuing..."
-              }
-              
-              if ((Test-Path $backupPath) -and ($backedUpFiles.Count -gt 0)) {
-                Copy-Item "$backupPath\*" $targetPath -Force -ErrorAction SilentlyContinue
-                Remove-Item $backupPath -Recurse -Force -ErrorAction SilentlyContinue
-                Write-Host "Protected files restored: $($backedUpFiles -join ', ')"
-              }
-              
-            } catch {
-              Write-Host "⚠️ Cleanup warning: $($_.Exception.Message)"
-            }
-          }
-
-          Write-Host "--- Smart Copy with ROBOCOPY ---"
-          $copySuccess = $false
           
-          try {
-            $robocopyArgs = @("`"$sourcePath`"", "`"$targetPath`"", "/E", "/R:2", "/W:3", "/MT:2", "/XO", "/NFL", "/NDL")
-            
-            $robocopyCmd = "robocopy " + ($robocopyArgs -join " ")
-            Write-Host "Running: $robocopyCmd"
-            
-            & cmd.exe /c $robocopyCmd
-            $robocopyExitCode = $LASTEXITCODE
-            
-            if ($robocopyExitCode -le 7) {
-              Write-Host "✅ ROBOCOPY completed successfully (exit code: $robocopyExitCode)"
-              $copySuccess = $true
-            } else {
-              throw "ROBOCOPY failed with exit code: $robocopyExitCode"
-            }
-          } catch {
-            Write-Host "⚠️ ROBOCOPY failed: $($_.Exception.Message)"
-            Write-Host "Falling back to PowerShell copy..."
-            
+          # Copy files using ROBOCOPY
+          Write-Host "Copying files with ROBOCOPY"
+          robocopy "$sourcePath" "$targetPath" /E /R:2 /W:3
+          $robocopyExitCode = $LASTEXITCODE
+          
+          if ($robocopyExitCode -le 7) {
+            Write-Host "Copy successful"
+          } else {
+            Write-Host "ROBOCOPY failed, trying PowerShell copy"
             try {
               Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
-              Write-Host "✅ PowerShell copy succeeded"
-              $copySuccess = $true
+              Write-Host "PowerShell copy successful"
             } catch {
-              Write-Host "❌ All copy methods failed: $($_.Exception.Message)"
+              Write-Host "All copy methods failed"
               exit 1
             }
           }
-
-          Write-Host "--- Deployment Verification ---"
-          if ($copySuccess) {
-            try {
-              $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
-              Write-Host "✅ Deployment successful!"
-              Write-Host "Total files deployed: $($deployedFiles.Count)"
-              
-              $keyFiles = @("index.html", "404.html")
-              foreach ($keyFile in $keyFiles) {
-                $keyFilePath = Join-Path $targetPath $keyFile
-                if (Test-Path $keyFilePath) {
-                  $fileSize = (Get-Item $keyFilePath).Length
-                  Write-Host "✅ Key file exists: $keyFile ($fileSize bytes)"
-                } else {
-                  Write-Host "⚠️ Key file missing: $keyFile"
-                }
-              }
-              
-              Write-Host "Deployed directory structure:"
-              Get-ChildItem -Path $targetPath -Directory | Select-Object -First 10 | ForEach-Object { Write-Host "  📁 $($_.Name)" }
-              
-            } catch {
-              Write-Host "⚠️ Verification warning: $($_.Exception.Message)"
-            }
-          }
-
-          Write-Host "--- Restart IIS Services ---"
+          
+          # Start IIS App Pool if exists
           try {
-            if ($appPool) {
-              Write-Host "Starting Application Pool: $appPoolName"
+            if (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue) {
               Start-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
-              Start-Sleep -Seconds 3
-              
-              $appPoolState = (Get-WebAppPoolState -Name $appPoolName).Value
-              Write-Host "Application Pool state: $appPoolState"
-              Write-Host "✅ Application Pool management completed"
+              Write-Host "App pool started"
             }
           } catch {
-            Write-Host "⚠️ IIS restart warning: $($_.Exception.Message)"
+            Write-Host "IIS restart skipped"
           }
           
-          Write-Host "🎉 Smart deployment completed successfully!"
-          Write-Host "Site should be available at your configured IIS endpoint"
+          # Verify deployment
+          $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
+          Write-Host "Deployment completed - Total files: $($deployedFiles.Count)"
+          
+          if (Test-Path "$targetPath\index.html") {
+            Write-Host "index.html found - Deployment verified"
+          } else {
+            Write-Host "index.html not found"
+          }
+          
+          Write-Host "Deployment finished"
