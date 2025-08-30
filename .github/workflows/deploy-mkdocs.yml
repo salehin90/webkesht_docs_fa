@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Debug Fixed V5
+name: Deploy MkDocs to IIS - Debug Fixed V6
 
 on:
   push:
@@ -38,11 +38,34 @@ jobs:
           
           Write-Host "Testing mkdocs version:"
           python -m mkdocs --version
-          Write-Host "Version test completed with exit code: $LASTEXITCODE"
+          $versionExitCode = $LASTEXITCODE
+          Write-Host "Version test completed with exit code: $versionExitCode"
           
-          Write-Host "`nTesting mkdocs help (first few lines):"
-          python -m mkdocs --help | Select-Object -First 10
-          Write-Host "Help test completed with exit code: $LASTEXITCODE"
+          if ($versionExitCode -ne 0) {
+            Write-Host "ERROR: MkDocs version command failed!"
+            exit $versionExitCode
+          }
+          
+          Write-Host "`nTesting mkdocs help (capturing output safely):"
+          try {
+            $helpOutput = python -m mkdocs --help 2>&1
+            $helpExitCode = $LASTEXITCODE
+            
+            # نمایش چند خط اول
+            $helpOutput | Select-Object -First 10 | ForEach-Object { Write-Host $_ }
+            
+            Write-Host "Help command exit code: $helpExitCode"
+            
+            # برای help command، exit code ممکن است -1 باشد که طبیعی است
+            if ($helpExitCode -ne 0 -and $helpExitCode -ne -1) {
+              Write-Host "WARNING: Help command returned unexpected exit code: $helpExitCode"
+            } else {
+              Write-Host "Help command completed successfully"
+            }
+          }
+          catch {
+            Write-Host "Warning: Could not capture help output: $($_.Exception.Message)"
+          }
           
           Write-Host "`nMkDocs commands test completed successfully!"
 
@@ -66,7 +89,13 @@ jobs:
           $pythonCode | Out-File -FilePath "test_yaml.py" -Encoding UTF8
           
           python test_yaml.py
-          Write-Host "YAML parsing test completed with exit code: $LASTEXITCODE"
+          $yamlExitCode = $LASTEXITCODE
+          Write-Host "YAML parsing test completed with exit code: $yamlExitCode"
+          
+          if ($yamlExitCode -ne 0) {
+            Write-Host "ERROR: YAML parsing failed!"
+            exit $yamlExitCode
+          }
           
           Remove-Item "test_yaml.py" -ErrorAction SilentlyContinue
 
@@ -95,22 +124,43 @@ jobs:
           Get-Content "mkdocs_test.yml" | ForEach-Object { Write-Host "  $_" }
           
           Write-Host "`nTesting with minimal configuration:"
-          
-          # اجرای دستور بدون capture کردن output
           Write-Host "Running: python -m mkdocs build --config-file mkdocs_test.yml --verbose"
+          
+          # اجرای دستور و ذخیره exit code
           python -m mkdocs build --config-file mkdocs_test.yml --verbose
-          $exitCode = $LASTEXITCODE
+          $buildExitCode = $LASTEXITCODE
           
-          Write-Host "`nExit Code: $exitCode"
+          Write-Host "`nMinimal build exit code: $buildExitCode"
           
-          if ($exitCode -eq 0) {
-            Write-Host "Minimal config test PASSED"
+          if ($buildExitCode -eq 0) {
+            Write-Host "✅ Minimal config test PASSED"
             if (Test-Path "site") {
               Write-Host "Site directory created for minimal test"
               Remove-Item -Path "site" -Recurse -Force -ErrorAction SilentlyContinue
             }
           } else {
-            Write-Host "Minimal config test FAILED with exit code: $exitCode"
+            Write-Host "❌ Minimal config test FAILED with exit code: $buildExitCode"
+            Write-Host "This indicates there might be an issue with the Material theme or configuration"
+            
+            # سعی در تست با theme پیش‌فرض
+            Write-Host "`nTrying with default theme..."
+            $defaultConfig = 'site_name: Test Site' + "`n"
+            $defaultConfig += 'docs_dir: docs_test'
+            $defaultConfig | Out-File -FilePath "mkdocs_default_test.yml" -Encoding UTF8
+            
+            python -m mkdocs build --config-file mkdocs_default_test.yml --verbose
+            $defaultExitCode = $LASTEXITCODE
+            
+            Write-Host "Default theme test exit code: $defaultExitCode"
+            
+            if ($defaultExitCode -eq 0) {
+              Write-Host "✅ Default theme works - issue is with Material theme configuration"
+            } else {
+              Write-Host "❌ Even default theme fails - there's a deeper issue"
+              exit $defaultExitCode
+            }
+            
+            Remove-Item "mkdocs_default_test.yml" -ErrorAction SilentlyContinue
           }
           
           # پاکسازی فایل‌های تست
@@ -167,14 +217,14 @@ jobs:
           Write-Host "Running mkdocs build with verbose output..."
           Write-Host "Command: python -m mkdocs build --clean --verbose"
           
-          # اجرای دستور بدون capture کردن output
+          # اجرای دستور build
           python -m mkdocs build --clean --verbose
-          $exitCode = $LASTEXITCODE
+          $buildExitCode = $LASTEXITCODE
           
-          Write-Host "`nProcess exit code: $exitCode"
+          Write-Host "`nMain build process exit code: $buildExitCode"
           
-          if ($exitCode -eq 0) {
-            Write-Host "`n=== Build Successful ==="
+          if ($buildExitCode -eq 0) {
+            Write-Host "`n✅ Build Successful!"
             if (Test-Path "site") {
               Write-Host "Site directory created successfully"
               
@@ -189,11 +239,14 @@ jobs:
               } else {
                 Write-Host "`nFA directory not created - using default site directory"
               }
+            } else {
+              Write-Host "❌ ERROR: Site directory was not created despite successful exit code!"
+              exit 1
             }
           } else {
-            Write-Host "`n=== Build Failed ==="
-            Write-Host "Exit code: $exitCode"
-            exit $exitCode
+            Write-Host "`n❌ Build Failed!"
+            Write-Host "Exit code: $buildExitCode"
+            exit $buildExitCode
           }
 
       - name: Deploy to IIS
@@ -229,4 +282,4 @@ jobs:
           $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
           Write-Host "Total files deployed: $($deployedFiles.Count)"
           
-          Write-Host "=== Deployment completed successfully! ==="
+          Write-Host "✅ Deployment completed successfully!"
