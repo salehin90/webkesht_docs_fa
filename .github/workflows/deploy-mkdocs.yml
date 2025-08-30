@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Simple Version
+name: Deploy MkDocs to IIS - Fixed Permissions
 
 on:
   push:
@@ -20,6 +20,7 @@ jobs:
           Write-Host "=== Environment Check ==="
           Set-Location "${{ github.workspace }}"
           Write-Host "Current directory: $(Get-Location)"
+          Write-Host "Running as: $($env:USERNAME)"
           
           if (Test-Path "mkdocs.yml") {
             Write-Host "mkdocs.yml found"
@@ -57,10 +58,10 @@ jobs:
             exit $buildExitCode
           }
 
-      - name: Deploy to IIS
+      - name: Deploy to IIS with Admin Rights
         shell: powershell
         run: |
-          Write-Host "=== IIS Deployment ==="
+          Write-Host "=== IIS Deployment with Admin Rights ==="
           
           $targetPath = "C:\inetpub\wwwroot\webkesht_docs"
           $sourcePath = "${{ github.workspace }}\site"
@@ -78,70 +79,161 @@ jobs:
           
           Write-Host "Source: $sourcePath"
           Write-Host "Target: $targetPath"
+          Write-Host "Current User: $($env:USERNAME)"
+          Write-Host "Current Process: $($PID)"
           
-          # Stop IIS App Pool if exists
+          # Check if running as administrator
+          $currentPrincipal = New-Object Security.Principal.WindowsPrincipal([Security.Principal.WindowsIdentity]::GetCurrent())
+          $isAdmin = $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+          Write-Host "Running as Administrator: $isAdmin"
+          
+          # Stop IIS App Pool with admin rights
           try {
             Import-Module WebAdministration -ErrorAction SilentlyContinue
             $appPoolName = "webkesht_docs"
             if (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue) {
+              Write-Host "Stopping App Pool: $appPoolName"
               Stop-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
-              Start-Sleep -Seconds 3
+              Start-Sleep -Seconds 5
               Write-Host "App pool stopped"
+            } else {
+              Write-Host "App pool not found: $appPoolName"
             }
           } catch {
-            Write-Host "IIS management skipped"
+            Write-Host "IIS App Pool management failed: $($_.Exception.Message)"
           }
           
-          # Create target directory
+          # Create target directory with proper permissions
+          Write-Host "Creating target directory with permissions"
           if (-not (Test-Path $targetPath)) {
-            New-Item -ItemType Directory -Force -Path $targetPath
-            Write-Host "Target directory created"
-          }
-          
-          # Clean target directory
-          try {
-            Remove-Item -Path "$targetPath\*" -Recurse -Force -ErrorAction Stop
-            Write-Host "Target directory cleaned"
-          } catch {
-            Write-Host "Clean failed, continuing"
-          }
-          
-          # Copy files using ROBOCOPY
-          Write-Host "Copying files with ROBOCOPY"
-          robocopy "$sourcePath" "$targetPath" /E /R:2 /W:3
-          $robocopyExitCode = $LASTEXITCODE
-          
-          if ($robocopyExitCode -le 7) {
-            Write-Host "Copy successful"
-          } else {
-            Write-Host "ROBOCOPY failed, trying PowerShell copy"
             try {
-              Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force
-              Write-Host "PowerShell copy successful"
+              New-Item -ItemType Directory -Force -Path $targetPath
+              Write-Host "Target directory created: $targetPath"
             } catch {
-              Write-Host "All copy methods failed"
+              Write-Host "Failed to create directory: $($_.Exception.Message)"
               exit 1
             }
           }
           
-          # Start IIS App Pool if exists
+          # Take ownership and set permissions
+          try {
+            Write-Host "Setting permissions on target directory"
+            $acl = Get-Acl $targetPath
+            $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule("IIS_IUSRS", "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+            $acl.SetAccessRule($accessRule)
+            $accessRule2 = New-Object System.Security.AccessControl.FileSystemAccessRule("IUSR", "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+            $acl.SetAccessRule($accessRule2)
+            $accessRule3 = New-Object System.Security.AccessControl.FileSystemAccessRule($env:USERNAME, "FullControl", "ContainerInherit,ObjectInherit", "None", "Allow")
+            $acl.SetAccessRule($accessRule3)
+            Set-Acl -Path $targetPath -AclObject $acl
+            Write-Host "Permissions set successfully"
+          } catch {
+            Write-Host "Permission setting failed: $($_.Exception.Message)"
+          }
+          
+          # Clean target directory with force
+          try {
+            Write-Host "Cleaning target directory"
+            Get-ChildItem -Path $targetPath -Recurse -Force | Remove-Item -Force -Recurse -ErrorAction Continue
+            Write-Host "Target directory cleaned"
+          } catch {
+            Write-Host "Clean failed: $($_.Exception.Message)"
+          }
+          
+          # Copy files using PowerShell with admin rights
+          try {
+            Write-Host "Copying files with PowerShell Copy-Item"
+            Copy-Item -Path "$sourcePath\*" -Destination $targetPath -Recurse -Force -ErrorAction Stop
+            Write-Host "PowerShell copy successful"
+            $copySuccess = $true
+          } catch {
+            Write-Host "PowerShell copy failed: $($_.Exception.Message)"
+            $copySuccess = $false
+          }
+          
+          # If PowerShell copy failed, try ROBOCOPY with different options
+          if (-not $copySuccess) {
+            try {
+              Write-Host "Trying ROBOCOPY with /B (backup mode)"
+              $robocopyArgs = @(
+                $sourcePath,
+                $targetPath,
+                "/E",
+                "/B",
+                "/R:1",
+                "/W:1",
+                "/NFL",
+                "/NDL"
+              )
+              & robocopy @robocopyArgs
+              $robocopyExitCode = $LASTEXITCODE
+              
+              if ($robocopyExitCode -le 7) {
+                Write-Host "ROBOCOPY successful with backup mode"
+                $copySuccess = $true
+              } else {
+                Write-Host "ROBOCOPY with backup mode failed: $robocopyExitCode"
+              }
+            } catch {
+              Write-Host "ROBOCOPY backup mode failed: $($_.Exception.Message)"
+            }
+          }
+          
+          # Final fallback - try with XCOPY
+          if (-not $copySuccess) {
+            try {
+              Write-Host "Trying XCOPY as final fallback"
+              & xcopy "$sourcePath\*" $targetPath /E /I /Y /Q
+              $xcopyExitCode = $LASTEXITCODE
+              
+              if ($xcopyExitCode -eq 0) {
+                Write-Host "XCOPY successful"
+                $copySuccess = $true
+              } else {
+                Write-Host "XCOPY failed: $xcopyExitCode"
+              }
+            } catch {
+              Write-Host "XCOPY failed: $($_.Exception.Message)"
+            }
+          }
+          
+          if (-not $copySuccess) {
+            Write-Host "All copy methods failed"
+            exit 1
+          }
+          
+          # Start IIS App Pool
           try {
             if (Get-IISAppPool -Name $appPoolName -ErrorAction SilentlyContinue) {
+              Write-Host "Starting App Pool: $appPoolName"
               Start-WebAppPool -Name $appPoolName -ErrorAction SilentlyContinue
+              Start-Sleep -Seconds 3
               Write-Host "App pool started"
             }
           } catch {
-            Write-Host "IIS restart skipped"
+            Write-Host "IIS App Pool start failed: $($_.Exception.Message)"
           }
           
           # Verify deployment
-          $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File
-          Write-Host "Deployment completed - Total files: $($deployedFiles.Count)"
-          
-          if (Test-Path "$targetPath\index.html") {
-            Write-Host "index.html found - Deployment verified"
-          } else {
-            Write-Host "index.html not found"
+          try {
+            $deployedFiles = Get-ChildItem -Path $targetPath -Recurse -File -ErrorAction Stop
+            Write-Host "Deployment completed - Total files: $($deployedFiles.Count)"
+            
+            if (Test-Path "$targetPath\index.html") {
+              Write-Host "index.html found - Deployment verified successfully"
+              $indexSize = (Get-Item "$targetPath\index.html").Length
+              Write-Host "index.html size: $indexSize bytes"
+            } else {
+              Write-Host "index.html not found - Deployment may have failed"
+              # List what we actually have
+              $items = Get-ChildItem -Path $targetPath -ErrorAction SilentlyContinue
+              Write-Host "Items in target directory:"
+              foreach ($item in $items) {
+                Write-Host "  - $($item.Name) ($($item.GetType().Name))"
+              }
+            }
+          } catch {
+            Write-Host "Verification failed: $($_.Exception.Message)"
           }
           
-          Write-Host "Deployment finished"
+          Write-Host "Deployment process finished"
