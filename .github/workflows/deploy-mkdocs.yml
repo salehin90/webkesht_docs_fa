@@ -1,4 +1,4 @@
-name: Deploy MkDocs to IIS - Fixed Permissions
+name: Deploy MkDocs to IIS - Fixed Permissions v2
 
 on:
   push:
