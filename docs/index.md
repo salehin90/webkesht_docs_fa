@@ -5,7 +5,7 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 
 <div class="hero-section" markdown="1">
 
-# سامانه هوشمند مدیریت و آبیاری وب کشت
+#  آبیاری هوشمند با وب کشت
 
 <p class="hero-subtitle">
 راه‌حل جامع برای کشاورزی هوشمند با تکنولوژی IoT
@@ -114,8 +114,8 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 !!! question "نیاز به کمک دارید؟"
     تیم پشتیبانی وب کشت آماده پاسخگویی به سؤالات شما است:
     
-    - :fontawesome-solid-envelope: **ایمیل**: support@webkesht.com
-    - :fontawesome-solid-phone: **تلفن**: ۰۲۱-۱۲۳۴۵۶۷۸
+    - :fontawesome-solid-envelope: **ایمیل**: saleh_ebrahimi2020@yahoo.com
+    - :fontawesome-solid-phone: **تلفن**: 09913950334
     - :fontawesome-solid-comments: **چت آنلاین**: در اپلیکیشن
 
 ---
@@ -126,6 +126,6 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 
 **"وب کشت"** همراه هوشمند شما در مسیر کشاورزی نوین
 
-[شروع همین حالا :fontawesome-solid-arrow-right:](http://app.webkesht.com){ .md-button .md-button--primary .md-button--stretch }
+[   همین حالا شروع کن :fontawesome-solid-arrow-right:](http://app.webkesht.com){ .md-button .md-button--primary .md-button--stretch }
 
 </div>
