@@ -14,7 +14,7 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 سامانه "وب کشت" یک ابزار قدرتمند و جامع برای مدیریت هوشمند در کشاورزی و فضای سبز و بهینه‌سازی فرآیندهای آبیاری است. این سامانه به صورت مکانمند تحت سیستم اطلاعات جغرافیایی GIS، تکنولوژی اینترنت اشیا (IoT) و یک رابط کاربری ساده، به شما کمک می‌کند تا بهره‌وری مصرف آب در پروژه خود را افزایش دهید.
 
 <div class="hero-actions" markdown="1">
-[ورود به سامانه:fontawesome-solid-rocket:](http://webkesht.com/app){ .md-button .md-button--primary }
+[ورود به سامانه:fontawesome-solid-rocket:](http://app.webkesht.com){ .md-button .md-button--primary }
 [راهنمای شروع سریع :fontawesome-solid-book-open:](quick-start/){ .md-button }
 </div>
 
@@ -100,10 +100,10 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 
 <div class="quick-start-links" markdown>
 
-1. **[ثبت‌نام و ورود](http://webkesht.com/app)** - ایجاد حساب کاربری جدید
+1. **[ثبت‌نام و ورود](http://app.webkesht.com)** - ایجاد حساب کاربری جدید
 2. **[شروع سریع](quick-start/index.md)** - راه‌اندازی تجهیزات IoT
 3. **[راهنمای کاربری](user-guide/index.md)** - یادگیری کامل سامانه
-4. **[مرجع API](http://webkesht.com/app)** - اتصال سامانه‌های خارجی
+4. **[مرجع API](http://app.webkesht.com)** - اتصال سامانه‌های خارجی
 5. **[وبلاگ](blog/)** - اتصال سامانه‌های خارجی
 
 </div>
@@ -127,6 +127,6 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 
 **"وب کشت"** همراه هوشمند شما در مسیر کشاورزی نوین
 
-[   همین حالا شروع کن :fontawesome-solid-arrow-right:](http://webkesht.com/app){ .md-button .md-button--primary .md-button--stretch }
+[   همین حالا شروع کن :fontawesome-solid-arrow-right:](http://app.webkesht.com){ .md-button .md-button--primary .md-button--stretch }
 
 </div>
