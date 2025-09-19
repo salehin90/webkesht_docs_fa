@@ -103,7 +103,7 @@ nav:
     - مدیریت زمین‌ها: user-guide/land-management.md
   - وبلاگ:
     - blog/index.md
-  - مرجع API:
-    - http://app.webkesht.com/swagger
+  - ورود به سامانه:
+    - http://webkesht.com/app
   - پشتیبانی:
     - support/index.md
