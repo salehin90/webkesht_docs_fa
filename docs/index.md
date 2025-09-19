@@ -13,7 +13,7 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 
 <div style="display: flex; justify-content: center; margin: 40px 0;">
     <div style="background: rgba(255,255,255,0.95); backdrop-filter: blur(10px); padding: 30px; border-radius: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.3);">
-        <img src="images/WebKesht_Logo_Larg.png" alt="لوگو وب کشت" style="max-width: 280px; height: auto; display: block;">
+        <img src="images/WebKesht_Logo_Larg.png" alt="لوگو وب کشت" style="max-width: 200px; height: auto; display: block;">
     </div>
 </div>
 

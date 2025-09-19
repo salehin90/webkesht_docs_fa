@@ -53,7 +53,7 @@ palette:
 icon:
     logo: material/leaf
   
-favicon: assets/images/favicon.png
+favicon:  images/favicon.ico
 
 # CSS سفارشی
 extra_css:
