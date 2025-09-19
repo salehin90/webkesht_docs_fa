@@ -12,6 +12,10 @@ theme:
   name: material
   language: fa
   custom_dir: overrides
+  palette:
+    - scheme: default
+      primary: green
+      accent: light green
   features:
     - navigation.tabs
     - navigation.tabs.sticky
@@ -23,13 +27,14 @@ theme:
     - search.suggest
     - search.share
     - content.code.copy
+    - content.code.annotate
     - toc.integrate
   
   font:
     text: Vazirmatn
     code: 'Fira Code'
   
-  palette:
+palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
       primary: indigo
@@ -45,10 +50,10 @@ theme:
         icon: material/brightness-4
         name: تغییر به حالت روشن
   
-  icon:
+icon:
     logo: material/leaf
   
-  favicon: images/favicon.png
+favicon: assets/images/favicon.png
 
 # CSS سفارشی
 extra_css:
@@ -91,7 +96,8 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
   - tables
-
+ 
+ 
 # ساختار ناوبری
 nav:
   - خانه: index.md

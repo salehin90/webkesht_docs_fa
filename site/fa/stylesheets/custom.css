@@ -1,3 +1,25 @@
 [dir="rtl"] .md-content__inner p {
   text-align: justify;
 }
+
+:root {
+  --md-primary-fg-color: #2E8B57;
+  --md-primary-fg-color--light: #32CD32;
+  --md-primary-fg-color--dark: #228B22;
+}
+
+[dir="rtl"] .md-content {
+  text-align: right;
+}
+
+.md-typeset h1, .md-typeset h2, .md-typeset h3 {
+  font-weight: 700;
+}
+
+.highlight-box {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+  border: 2px solid rgba(46, 139, 87, 0.1);
+}
