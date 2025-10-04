@@ -103,10 +103,12 @@ nav:
   - خانه: index.md
   - شروع سریع:
     - quick-start/index.md
+    - راهنمای جامع سامانه مدیریت آبیاری وب‌کشت: quick-start/Guide.md
     - نصب و راه‌اندازی: quick-start/installation.md
   - راهنمای کاربری:
     - user-guide/index.md
     - مدیریت زمین‌ها: user-guide/land-management.md
+    - راهنمای جامع بافت خاک: user-guide/Soil.md
   - وبلاگ:
     - blog/index.md
   - ورود به سامانه:

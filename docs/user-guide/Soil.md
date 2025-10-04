@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>راهنمای بافت خاک - وب کشت</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            background: #f5f7fa;
+            color: #2c3e50;
+            padding: 20px;
+            font-size: 15px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2ecc71 0%, #3498db 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+            
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 400;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        /* بخش اصلی */
+        .main-section {
+            margin-bottom: 20px;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .section-header {
+            background: #2ecc71;
+            color: white;
+            padding: 16px 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1em;
+            transition: background 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .section-header:hover {
+            background: #27ae60;
+        }
+
+        .section-icon {
+            font-size: 1.4em;
+            transition: transform 0.3s ease;
+            font-weight: normal;
+        }
+
+        .section-header.collapsed .section-icon {
+            transform: rotate(45deg);
+        }
+
+        .section-content {
+            max-height: 5000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .section-content.collapsed {
+            max-height: 0;
+        }
+
+        .section-body {
+            padding: 25px;
+            background: #fafafa;
+        }
+
+        /* زیربخش‌ها */
+        .sub-section {
+            margin: 20px 0;
+            border: 1px solid #e1e8ed;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .sub-header {
+            background: #90acf8ff;
+            color: white;
+            padding: 14px 18px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1em;
+            transition: background 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .sub-header:hover {
+            background: #7698f5ff;
+        }
+
+        .sub-icon {
+            font-size: 1.3em;
+            transition: transform 0.3s ease;
+        }
+
+        .sub-header.collapsed .sub-icon {
+            transform: rotate(45deg);
+        }
+
+        .sub-content {
+            max-height: 3000px;
+            overflow: hidden;
+            transition: max-height 0.5s ease;
+        }
+
+        .sub-content.collapsed {
+            max-height: 0;
+        }
+
+        .sub-body {
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        /* کادرهای تعریف */
+        .definition-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 25px auto;
+            max-width: 100%;
+            justify-items: center;
+        }
+
+        .definition-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e1e8ed;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            text-align: center;
+            width: 100%;
+        }
+
+        .definition-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .definition-card h3 {
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .definition-card p {
+            font-size: 0.95em;
+            line-height: 1.7;
+            color: #555;
+        }
+
+        /* لیست اهمیت */
+        .importance-list {
+            counter-reset: importance;
+            list-style: none;
+            padding: 0;
+        }
+
+        .importance-list li {
+            counter-increment: importance;
+            margin: 15px 0;
+            padding: 18px 20px;
+            background: white;
+            border-radius: 8px;
+            border-right: 4px solid #2ecc71;
+            position: relative;
+            padding-left: 60px;
+            font-size: 0.95em;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+
+        .importance-list li::before {
+            content: counter(importance);
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #2ecc71;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* مراحل انجام */
+        .method-steps {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #e1e8ed;
+        }
+
+        .method-steps h4 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.05em;
+            font-weight: 600;
+        }
+
+        .step-timeline {
+            padding: 0;
+        }
+
+        .timeline-item {
+            margin: 12px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-right: 3px solid #3498db;
+            font-size: 0.95em;
+        }
+
+        .timeline-item strong {
+            color: #2980b9;
+        }
+
+        .timeline-item ul {
+            margin-top: 10px;
+            padding-right: 25px;
+        }
+
+        .timeline-item li {
+            margin: 6px 0;
+        }
+
+        /* فرمول */
+        .formula-box {
+            background: #2ecc71;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1em;
+            margin: 20px auto;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
+        }
+
+        /* تصاویر */
+        .triangle-container {
+            text-align: center;
+            margin: 30px 0;
+            padding: 25px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .triangle-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .triangle-container p {
+            margin-top: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1em;
+        }
+
+        /* جداول */
+        .table-container {
+            overflow-x: auto;
+            margin: 20px auto;
+            max-width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        table {
+            width: 100%;
+            max-width: 950px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin: 0 auto;
+        }
+
+        th {
+            background: #3498db;
+            color: white;
+            padding: 14px 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #e1e8ed;
+            font-size: 0.9em;
+        }
+
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        tr:hover {
+            background: #e8f5e9;
+        }
+
+        /* باکس‌های توجه */
+        .highlight {
+            background: #fff9e6;
+            padding: 18px;
+            border-radius: 8px;
+            border-right: 4px solid #ffc107;
+            margin: 20px 0;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        .note-box {
+            background: #e3f2fd;
+            padding: 18px;
+            border-radius: 8px;
+            border-right: 4px solid #3498db;
+            margin: 20px 0;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        .warning-box {
+            background: #ffebee;
+            padding: 18px;
+            border-radius: 8px;
+            border-right: 4px solid #f44336;
+            margin: 20px 0;
+            font-size: 0.95em;
+            line-height: 1.7;
+        }
+
+        /* خط جداکننده */
+        .separator {
+            height: 2px;
+            background: linear-gradient(90deg, #2ecc71 0%, #3498db 100%);
+            margin: 35px 0;
+            border-radius: 2px;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .section-header {
+                font-size: 1em;
+                padding: 14px 16px;
+            }
+
+            .definition-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌱 بافت خاک: سنگ بنای مدیریت آبیاری 💧</h1>
+            <p>راهنمای جامع تشخیص و مدیریت بافت خاک برای آبیاری بهینه</p>
+        </div>
+
+        <div class="content">
+            <!-- بخش 1: تعریف بافت خاک -->
+            <div class="main-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span>🔬 تعریف بافت خاک و انواع ذرات</span>
+                    <span class="section-icon">−</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        <p style="margin-bottom: 25px; text-align: justify; line-height: 1.8;">
+                            بافت خاک به درصد نسبی ذرات معدنی شن، سیلت و رس در خاک اطلاق می‌شود. این ویژگی فیزیکی اساسی خاک، تعیین‌کننده بسیاری از خصوصیات هیدرولوژیکی و زراعی خاک از جمله ظرفیت نگهداری آب، سرعت نفوذ آب، تهویه و قابلیت دسترسی ریشه‌ها به آب و مواد غذایی است.
+                        </p>
+
+                        <div class="definition-grid">
+                            <div class="definition-card">
+                                <h3>🏖️ ذرات شن (Sand)</h3>
+                                                          <p><strong>اندازه:</strong> 2 میلی‌متر تا 50 میکرومتر</p>
+                            <p>درشت‌ترین ذرات هستند. نفوذپذیری آب بالا و ظرفیت نگهداری آب و مواد غذایی پایینی دارند. به خاک‌های شنی، خاک سبک می‌گویند.</p>
+
+                            </div>
+
+                            <div class="definition-card">
+                                <h3>🌾 ذرات سیلت (Silt)</h3>
+                                                            <p><strong>اندازه:</strong> 50 تا 2 میکرومتر</p>
+                            <p>اندازه‌ای بین شن و رس دارند. ظرفیت نگهداری آب متوسطی دارند و زهکشی آن‌ها نیز متوسط است.</p>
+
+                            </div>
+
+                            <div class="definition-card">
+                                <h3>🧱 ذرات رس (Clay)</h3>
+                                                           <p><strong>اندازه:</strong> کوچکتر از 2 میکرومتر</p>
+                            <p>ریزترین ذرات هستند. نفوذپذیری آب بسیار پایین و ظرفیت نگهداری آب و مواد غذایی بالایی دارند. به خاک‌های رسی، خاک سنگین می‌گویند.</p>
+
+                            </div>
+
+                    
+
+                        </div>
+                         <div class="highlight">
+                        <strong>🌿 لوم (Loam):</strong> به خاکی گفته می‌شود که ترکیبی تقریباً متعادل از این سه ذره را داشته باشد و به طور عمومی بهترین بافت برای رشد گیاه به حساب می‌آید.
+                    </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <!-- بخش 2: اهمیت تشخیص بافت -->
+            <div class="main-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span>⚡ اهمیت تشخیص بافت خاک در مدیریت هوشمند آبیاری</span>
+                    <span class="section-icon">−</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        <p style="margin-bottom: 20px; text-align: justify; line-height: 1.8;">
+                            شناخت دقیق بافت خاک، پایه و اساس برنامه‌ریزی دقیق آبیاری و بهینه‌سازی مصرف آب در کشاورزی است. در ادامه، سه دلیل کلیدی اهمیت این شناخت آورده شده است:
+                        </p>
+
+                        <ol class="importance-list">
+                            <li>
+                                <strong>💧 ظرفیت نگهداری آب:</strong> بافت خاک مستقیماً تعیین می‌کند که خاک چقدر آب می‌تواند برای گیاه نگه دارد (ظرفیت زراعی). خاک‌های رسی آب بیشتری ذخیره می‌کنند، در حالی که خاک‌های شنی به سرعت آب را از دست می‌دهند.
+                            </li>
+                            <li>
+                                <strong>🚿 سرعت نفوذ و زهکشی آب:</strong> خاک‌های شنی آب را سریع جذب کرده و به سرعت زهکشی می‌کنند (نفوذپذیری بالا)، لذا نیاز به آبیاری‌های <strong>کوتاه‌تر و مکررتر</strong> دارند. در مقابل، خاک‌های رسی آهسته‌تر آب را جذب کرده و نگه می‌دارند (نفوذپذیری پایین)، که خطر رواناب و غرقابی شدن در آن‌ها بیشتر است و نیاز به آبیاری‌های <strong>طولانی‌تر با فواصل بیشتر</strong> دارند.
+                            </li>
+                            <li>
+                                <strong>📊 انتخاب سنسور و روش آبیاری:</strong> بافت خاک بر انتخاب نوع و محل قرارگیری سنسورهای رطوبت خاک و همچنین بر سیستم آبیاری مناسب (مثلاً آبیاری قطره‌ای برای خاک‌های رسی بهتر است) تأثیر می‌گذارد.
+                            </li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <!-- بخش 3: راهنمای مزرعه‌ای (شامل زیربخش‌ها) -->
+            <div class="main-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span>🔍 راهنمای مزرعه‌ای تشخیص بافت خاک با چشم و دست</span>
+                    <span class="section-icon">−</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        <div class="highlight">
+                            در غیاب نتایج آزمایشگاهی، می‌توانید با استفاده از این روش‌های ساده و با تکیه بر حس لامسه و مشاهدات چشمی خود، پازل بافت خاک مزرعه را به صورت تجربی و سریع حل کنید و مدیریت آبیاری را آغاز نمایید.
+                        </div>
+
+                        <!-- زیربخش 1: روش آزمون لوله -->
+                        <div class="sub-section">
+                            <div class="sub-header" onclick="toggleSubSection(this)">
+                                <span>🧪 روش آزمون لوله (Jar Test - چشمی)</span>
+                                <span class="sub-icon">−</span>
+                            </div>
+                            <div class="sub-content">
+                                <div class="sub-body">
+                                    <div class="method-steps">
+                                        <h4>📋 مراحل انجام:</h4>
+                                        <div class="step-timeline">
+                                            <div class="timeline-item">
+                                                <strong>مرحله 1:</strong> مقداری خاک (حدود یک چهارم ظرف) را در یک شیشه دربسته (مانند شیشه مربا) بریزید.
+                                            </div>
+                                            <div class="timeline-item">
+                                                <strong>مرحله 2:</strong> آب و یک قاشق چایخوری مایع ظرفشویی (به عنوان عامل پراکنده‌ساز) به آن اضافه کنید تا ظرف تقریباً پر شود.
+                                            </div>
+                                            <div class="timeline-item">
+                                                <strong>مرحله 3:</strong> ظرف را به شدت برای چند دقیقه تکان دهید تا ذرات خاک کاملاً پراکنده شوند.
+                                            </div>
+                                            <div class="timeline-item">
+                                                <strong>مرحله 4:</strong> اجازه دهید خاک ته‌نشین شود و تغییرات را مشاهده کنید:
+                                                <ul style="margin-top: 10px;">
+                                                    <li><strong>⏱️ پس از 1 دقیقه:</strong> ذرات درشت <strong>شن</strong> ته‌نشین می‌شوند.</li>
+                                                    <li><strong>⏰ پس از 2 ساعت:</strong> ذرات <strong>سیلت</strong> روی شن‌ها ته‌نشین می‌شوند.</li>
+                                                    <li><strong>🕐 پس از 24 تا 48 ساعت:</strong> ذرات بسیار ریز <strong>رس</strong> در نهایت روی سیلت‌ها ته‌نشین شده و یا معلق می‌مانند (بخش رس).</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <h4 style="margin: 20px 0 12px 0; color: #2c3e50;">📐 تشخیص و محاسبه:</h4>
+                                    <p style="text-align: justify; margin-bottom: 18px; line-height: 1.8;">
+                                        پس از ته‌نشین شدن کامل ذرات در روش آزمون لوله، شما می‌توانید با اندازه‌گیری ارتفاع هر لایه، درصد تقریبی شن، سیلت و رس را از طریق رابطه زیر محاسبه کنید:
+                                    </p>
+
+                                    <div class="formula-box">
+                                        📊 درصد هر جزء $=$ (ارتفاع لایه هر جزء (میلیمتر) $\div$ ارتفاع کل رسوبات ته‌نشین شده (میلی متر)) $\times$ $100$
+                                    </div>
+
+                                    <h4 style="margin: 20px 0 12px 0; color: #2c3e50;">📈 تفسیر نتایج:</h4>
+                                    <p style="text-align: justify; line-height: 1.8;">
+                                        برای تعیین دقیق نام بافت خاک (مانند لوم شنی، لوم رسی و...)، باید از <strong>🔺 مثلث بافت خاک</strong> استفاده کنید. این مثلث یک نمودار سه‌گانه است که ارتباط بین درصدهای شن، سیلت و رس را نمایش می‌دهد و خاک را به ۱۲ گروه بافتی طبقه‌بندی می‌کند.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- زیربخش 2: مثلث بافت خاک -->
+                        <div class="sub-section">
+                            <div class="sub-header" onclick="toggleSubSection(this)">
+                                <span>🔺 نحوه استفاده از مثلث بافت خاک</span>
+                                <span class="sub-icon">−</span>
+                            </div>
+                            <div class="sub-content">
+                                <div class="sub-body">
+                                    <div class="method-steps">
+                                        <ol style="padding-right: 25px;">
+                                            <li style="margin: 12px 0; line-height: 1.7;"><strong>🏖️ محور شن (Sand):</strong> درصد شن را در ضلع پایینی مثلث پیدا کنید. خطوط شن <strong>به سمت چپ</strong> و موازی با ضلع سیلت حرکت می‌کنند.</li>
+                                            <li style="margin: 12px 0; line-height: 1.7;"><strong>🧱 محور رس (Clay):</strong> درصد رس را در ضلع چپ مثلث پیدا کنید. خطوط رس <strong>به سمت راست</strong> و موازی با ضلع شن حرکت می‌کنند.</li>
+                                            <li style="margin: 12px 0; line-height: 1.7;"><strong>🌾 محور سیلت (Silt):</strong> درصد سیلت را در ضلع راست مثلث پیدا کنید. خطوط سیلت <strong>به صورت افقی</strong> (یا موازی با ضلع رس) حرکت می‌کنند.</li>
+                                        </ol>
+                                    </div>
+
+                                    <p style="text-align: justify; margin: 18px 0; line-height: 1.8;">
+                                        نقطه‌ای که سه خط (که از درصدهای به دست آمده شن، سیلت و رس رسم شده‌اند) یکدیگر را قطع می‌کنند، نشان‌دهنده کلاس بافتی خاک شماست.
+                                    </p>
+
+                                    <div class="note-box">
+                                        <strong>💡 نکته مهم:</strong> دقت کنید که مجموع درصدهای شن، سیلت و رس همیشه باید <strong>100%</strong> باشد.
+                                    </div>
+
+                                    <div class="triangle-container">
+                                        <img src="images/Picture1.jpg" alt="مثلث بافت خاک USDA" />
+                                        <p>🔺 مثلث بافت خاک USDA - راهنمای تعیین کلاس بافتی</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- زیربخش 3: روش آزمون مفتول -->
+                        <div class="sub-section">
+                            <div class="sub-header" onclick="toggleSubSection(this)">
+                                <span>🤏 روش آزمون مفتول (Ribbon Test - لمسی)</span>
+                                <span class="sub-icon">−</span>
+                            </div>
+                            <div class="sub-content">
+                                <div class="sub-body">
+                                    <p style="text-align: justify; margin-bottom: 20px; line-height: 1.8;">
+                                        این روش به شما کمک می‌کند تا میزان <strong>چسبندگی و خمیری بودن</strong> خاک را (که مستقیماً با میزان رس مرتبط است) تعیین کنید.
+                                    </p>
+
+                                    <div class="table-container">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>نوع بافت خاک</th>
+                                                    <th>خصوصیت هنگام لمس</th>
+                                                    <th>آزمون مفتول</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td><strong>🏖️ شنی</strong><br>Sand</td>
+                                                    <td>زبر، دانه‌دانه</td>
+                                                    <td>مفتول نمی‌شود یا به صورت نوار خیلی کوتاه و شکننده کمتر از 2.5 سانتی‌متر تشکیل می‌دهد.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>🌱 لومی شنی</strong><br>Loamy Sand</td>
+                                                    <td>کمی زبر، حس نرمی کم</td>
+                                                    <td>به سختی مفتول می‌شود، نوار بسیار شکننده در حد 2.5 تا 3 سانتی‌متر.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>🌿 لوم</strong><br>Loam</td>
+                                                    <td>حس مخملین و نرمی دارد، کمی زبر</td>
+                                                    <td>نوار کوتاهی (حدود 2.5 تا 5 سانتی‌متر) تشکیل می‌دهد که به راحتی می‌شکند و حس پلاستیکی کمی دارد.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>🏺 لوم رسی</strong><br>Clay Loam</td>
+                                                    <td>حس چسبندگی و خمیری بودن دارد، تا حدی زبر (به دلیل شن)</td>
+                                                    <td>نوار نسبتاً بلند و قابل انعطاف (حدود 5 تا 7.5 سانتی‌متر) تشکیل می‌دهد.</td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>🧱 رسی</strong><br>Clay</td>
+                                                    <td>بسیار چسبنده، خمیری و لیز هنگام مرطوب بودن</td>
+                                                    <td>به راحتی یک نوار بلند و پایدار (بیشتر از 7.5 سانتی‌متر) تشکیل می‌دهد که قابل خم شدن است.</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <div class="warning-box">
+                                        <strong>⚠️ نکته مهم:</strong> برای انجام این آزمایش، مقدار کمی از خاک را بردارید، به آرامی آب اضافه کنید و آن را بین شست و انگشت اشاره بمالید تا به حالت خمیری درآید. سپس سعی کنید با فشار دادن، یک نوار یا مفتول به قطر حدود 3 میلی‌متر ایجاد کنید.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="separator"></div>
+
+            <!-- بخش 4: جدول پارامترهای رطوبتی -->
+            <div class="main-section">
+                <div class="section-header" onclick="toggleSection(this)">
+                    <span>📊 جدول راهنمای پارامترهای رطوبتی خاک برای آبیاری</span>
+                    <span class="section-icon">−</span>
+                </div>
+                <div class="section-content">
+                    <div class="section-body">
+                        <p style="margin-bottom: 20px; text-align: justify; line-height: 1.8;">
+                            هم اکنون که بافت خاک خود را مشخص کرده‌اید، مقادیر پارامترهای مربوط به آن را از جدول زیر استخراج کنید و در بخش "<strong>📝 لیست خاک‌ها</strong>" وارد نمایید.
+                        </p>
+
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>بافت خاک</th>
+                                        <th>سرعت نفوذ نهایی خاک f<sub>0</sub><br>(mm/hr)</th>
+                                        <th>تخلخل n<br>(%)</th>
+                                        <th>رطوبت حد زراعی FC<br>(%)</th>
+                                        <th>رطوبت حد پژمردگی PWP<br>(%)</th>
+                                        <th>آب قابل دسترس TAW<br>(mm/m)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><strong>شنی</strong><br>Sandy</td>
+                                        <td>20 - 30</td>
+                                        <td>38 - 43</td>
+                                        <td>7 - 14</td>
+                                        <td>2 - 6</td>
+                                        <td>50 - 75</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>لوم شنی</strong><br>Sandy Loam</td>
+                                        <td>10 - 20</td>
+                                        <td>38 - 46</td>
+                                        <td>11 - 19</td>
+                                        <td>4 - 8</td>
+                                        <td>75 - 115</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>لوم</strong><br>Loam</td>
+                                        <td>8 - 20</td>
+                                        <td>43 - 49</td>
+                                        <td>18 - 26</td>
+                                        <td>8 - 12</td>
+                                        <td>100 - 140</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>لوم رسی</strong><br>Clay Loam</td>
+                                        <td>2 - 10</td>
+                                        <td>40 - 49</td>
+                                        <td>23 - 31</td>
+                                        <td>11 - 15</td>
+                                        <td>120 - 160</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>سیلتی لوم</strong><br>Silty Loam</td>
+                                        <td>5 - 13</td>
+                                        <td>46 - 54</td>
+                                        <td>20 - 30</td>
+                                        <td>9 - 14</td>
+                                        <td>110 - 160</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>رسی</strong><br>Clay</td>
+                                        <td>1 - 5</td>
+                                        <td>43 - 58</td>
+                                        <td>31 - 39</td>
+                                        <td>15 - 19</td>
+                                        <td>160 - 200</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="note-box" style="margin-top: 25px;">
+                            <strong>✅ نتیجه‌گیری:</strong> با شناخت دقیق بافت خاک و استفاده از پارامترهای مناسب، می‌توانید به مدیریت بهینه آبیاری دست یابید و بهره‌وری مصرف آب را به حداکثر برسانید.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // تابع باز و بسته کردن بخش‌های اصلی
+        function toggleSection(header) {
+            const content = header.nextElementSibling;
+            const isCollapsed = content.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+        }
+
+        // تابع باز و بسته کردن زیربخش‌ها
+        function toggleSubSection(header) {
+            const content = header.nextElementSibling;
+            const isCollapsed = content.classList.contains('collapsed');
+            
+            if (isCollapsed) {
+                content.classList.remove('collapsed');
+                header.classList.remove('collapsed');
+            } else {
+                content.classList.add('collapsed');
+                header.classList.add('collapsed');
+            }
+        }
+
+        // بارگذاری MathJax برای نمایش فرمول‌های ریاضی
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$']],
+                displayMath: [['$$', '$$']]
+            }
+        };
+
+        (function() {
+            var script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
+            script.async = true;
+            document.head.appendChild(script);
+        })();
+    </script>
+</body>
+</html>
