@@ -40,6 +40,7 @@
             font-size: 2.2em;
             margin-bottom: 10px;
             font-weight: 600;
+            
         }
 
         .header p {
