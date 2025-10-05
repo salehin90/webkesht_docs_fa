@@ -58,6 +58,7 @@ favicon:  images/favicon.ico
 # CSS سفارشی
 extra_css:
   - stylesheets/custom.css
+  - stylesheets/MyStyle.css
 
 # تنظیمات اضافی
 extra:
@@ -100,18 +101,28 @@ markdown_extensions:
  
 # ساختار ناوبری
 nav:
+
   - خانه: index.md
-  - شروع سریع:
-    - quick-start/index.md
-    - راهنمای جامع سامانه مدیریت آبیاری وب‌کشت: quick-start/Guide.md
+
+  - راهنمای نرم افزار:
+    - راهنمای جامع کار با سامانه : quick-start/Guide.md
     - نصب و راه‌اندازی: quick-start/installation.md
+    - quick-start/index.md
+    
   - راهنمای کاربری:
     - user-guide/index.md
     - مدیریت زمین‌ها: user-guide/land-management.md
     - راهنمای جامع بافت خاک: user-guide/Soil.md
+    - راهنمای جامع پوشش گیاهی: user-guide/Vegetation.md
+    - راهنمای جامع سیستم آبیاری: user-guide/Irrigation.md
+
   - وبلاگ:
     - blog/index.md
-  - ورود به سامانه:
+
+
+  - ورود به سامانه/عضویت:
     - http://app.webkesht.com
+
+
   - پشتیبانی:
     - support/index.md
