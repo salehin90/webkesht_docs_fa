@@ -102,7 +102,7 @@
                                     </div>
 								</div>
                          </div>            
-                                                            
+                               </div>                             
 
 
                         <!-- زیربخش ورود -->
@@ -191,8 +191,9 @@
                                     </div>
 								</div>
                          </div>            
-                    </div>           
-                 </div>       
+                                 
+                       
+                 
 
                         <!-- زیربخش کار با لیست -->
 						<div class="sub-section">
@@ -235,8 +236,8 @@
 											
                                     </div>
 								</div>
-                         </div>            
-                    </div>           
+                            </div>            
+                        </div>           
                  </div>       
                  </div>
                  </div>
@@ -508,7 +509,7 @@
                          </div
 </div>
 </div>
-
+</div>
 <!-- زیربخش افزودن دستگاه -->
                         <div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
