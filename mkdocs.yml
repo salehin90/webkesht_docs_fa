@@ -60,6 +60,12 @@ extra_css:
   - stylesheets/custom.css
   - stylesheets/MyStyle.css
 
+
+extra_javascript:
+- javascripts/custom.js
+
+
+
 # تنظیمات اضافی
 extra:
   social:
@@ -86,6 +92,8 @@ markdown_extensions:
   - pymdownx.emoji:
       emoji_index: !!python/name:materialx.emoji.twemoji
       emoji_generator: !!python/name:materialx.emoji.to_svg
+
+
   - admonition
   - pymdownx.details
   - pymdownx.superfences
@@ -106,12 +114,11 @@ nav:
 
   - راهنمای نرم افزار:
     - راهنمای جامع کار با سامانه : quick-start/Guide.md
-    - نصب و راه‌اندازی: quick-start/installation.md
+
     - quick-start/index.md
     
   - راهنمای کاربری:
     - user-guide/index.md
-    - مدیریت زمین‌ها: user-guide/land-management.md
     - راهنمای جامع بافت خاک: user-guide/Soil.md
     - راهنمای جامع پوشش گیاهی: user-guide/Vegetation.md
     - راهنمای جامع سیستم آبیاری: user-guide/Irrigation.md
