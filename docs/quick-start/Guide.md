@@ -1,29 +1,21 @@
 
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>راهنمای جامع سامانه مدیریت آبیاری وب‌کشت</title>
-</head>
-
-
-<body>
-    <div class="container">
-        <div class="header">
+<div class="container">
+    <div class="header">
             <h1>🌱 راهنمای جامع سامانه مدیریت آبیاری وب‌کشت 💧</h1>
             <p>راهنمای کامل کار با سامانه هوشمند مدیریت آبیاری وب‌کشت - از ثبت‌نام تا مدیریت هوشمند آبیاری</p>
-        </div>
+    </div>
 
-        <div class="content">
+<div class="content">
             <p style="margin-bottom: 25px; text-align: justify; line-height: 1.8; font-size: 1.1em;">
                 به سامانه هوشمند مدیریت آبیاری وب‌کشت خوش آمدید. این راهنما شما را در فرآیند ثبت‌نام، ایجاد پروژه و تعریف پارامترهای اساسی یاری می‌کند.
             </p>
+</div>
 
-            <!-- بخش اول: ثبت‌نام و ورود -->
+
+<!-- بخش اول: ثبت‌نام و ورود -->
             <div class="main-section" >
-                <div class="section-header" onclick="toggleSection(this)">
+                <div class="section-header" onclick="toggleSection(this)" >
                     <span>👤 راهنمای ثبت‌نام و ورود به حساب کاربری</span>
                     <span class="section-icon">−</span>
                 </div>
@@ -104,7 +96,7 @@
                          </div>            
                                </div>                             
 
-
+### three1
                         <!-- زیربخش ورود -->
                         <div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
@@ -146,7 +138,7 @@
             <div class="separator"></div>
 
 
-
+## two1
 <!-- بخش دوم: مدیریت پروژه‌ها -->
             <div class="main-section" >
                 <div class="section-header" onclick="toggleSection(this)">
@@ -647,7 +639,9 @@
 											
 											<div class="timeline-item">
                                                 <strong>آبیاری هوشمند (گزینه پیشنهادی):</strong>
-												در این حالت، سامانه هر روز بر اساس **اطلاعات هواشناسی آنلاین** (دما، رطوبت، تبخیر و تعرق) و مشخصات پروژه، نیاز آبی دقیق را محاسبه و برنامه آبیاری را به صورت پویا اجرا می‌کند. همچنین برنامه آبیاری تا ۷ روز آینده نیز پیش‌بینی و قابل مشاهده است.
+												در این حالت، سامانه هر روز بر اساس 
+                                                <strong>اطلاعات هواشناسی آنلاین</strong>
+                                                 (دما، رطوبت، تبخیر و تعرق) و مشخصات پروژه، نیاز آبی دقیق را محاسبه و برنامه آبیاری را به صورت پویا اجرا می‌کند. همچنین برنامه آبیاری تا ۷ روز آینده نیز پیش‌بینی و قابل مشاهده است.
 											<div class="image-container">
                                             <img src="images/24.SmartIrrigation.JPG" "alt="تنظیمات آبیاری هوشمند">
 												</div>
@@ -672,34 +666,4 @@
     </div>
 
                         
-    <script>
-        // تابع باز و بسته کردن بخش‌های اصلی
-        function toggleSection(header) {
-            const content = header.nextElementSibling;
-            const isCollapsed = content.classList.contains('collapsed');
-
-            if (isCollapsed) {
-                content.classList.remove('collapsed');
-                header.classList.remove('collapsed');
-            } else {
-                content.classList.add('collapsed');
-                header.classList.add('collapsed');
-            }
-        }
-
-        // تابع باز و بسته کردن زیربخش‌ها
-        function toggleSubSection(header) {
-            const content = header.nextElementSibling;
-            const isCollapsed = content.classList.contains('collapsed');
-
-            if (isCollapsed) {
-                content.classList.remove('collapsed');
-                header.classList.remove('collapsed');
-            } else {
-                content.classList.add('collapsed');
-                header.classList.add('collapsed');
-            }
-        }
-    </script>
-</body>
-</html>
+   

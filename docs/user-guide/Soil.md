@@ -1,13 +1,4 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>راهنمای بافت خاک - وب کشت</title>
-  
-</head>
-<body>
-    <div class="container">
+<div class="container">
         <div class="header">
             <h1>🌱 بافت خاک: سنگ بنای مدیریت آبیاری 💧</h1>
             <p>راهنمای جامع تشخیص و مدیریت بافت خاک برای آبیاری بهینه</p>
@@ -330,49 +321,4 @@
         </div>
     </div>
 
-    <script>
-        // تابع باز و بسته کردن بخش‌های اصلی
-        function toggleSection(header) {
-            const content = header.nextElementSibling;
-            const isCollapsed = content.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                content.classList.remove('collapsed');
-                header.classList.remove('collapsed');
-            } else {
-                content.classList.add('collapsed');
-                header.classList.add('collapsed');
-            }
-        }
-
-        // تابع باز و بسته کردن زیربخش‌ها
-        function toggleSubSection(header) {
-            const content = header.nextElementSibling;
-            const isCollapsed = content.classList.contains('collapsed');
-            
-            if (isCollapsed) {
-                content.classList.remove('collapsed');
-                header.classList.remove('collapsed');
-            } else {
-                content.classList.add('collapsed');
-                header.classList.add('collapsed');
-            }
-        }
-
-        // بارگذاری MathJax برای نمایش فرمول‌های ریاضی
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$']],
-                displayMath: [['$$', '$$']]
-            }
-        };
-
-        (function() {
-            var script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js';
-            script.async = true;
-            document.head.appendChild(script);
-        })();
-    </script>
-</body>
-</html>
+   
