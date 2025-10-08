@@ -281,6 +281,18 @@
             box-shadow: 0 2px 8px rgba(46, 204, 113, 0.3);
         }
 
+        .formula-ex {
+            background: #d4d9db;
+            color: rgb(10, 4, 4);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8em;
+            margin: 20px auto;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(2, 14, 6, 0.3);
+        }
+
         /* تصاویر */
         .image-container {
             text-align: center;
