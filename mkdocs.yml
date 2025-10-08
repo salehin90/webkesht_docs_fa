@@ -59,7 +59,7 @@ favicon:  images/favicon.ico
 extra_css:
   - stylesheets/custom.css
   - stylesheets/MyStyle.css
-
+  - stylesheets/Article.css
 
 extra_javascript:
 - javascripts/custom.js
