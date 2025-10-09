@@ -1,24 +1,86 @@
 ---
-title: راهنمای جامع شروع سریع آبیاری هوشمند با وب‌کشت
+title: راهنمای شروع سریع آبیاری هوشمند با وب‌کشت
 description: در این راهنمای جامع، گام به گام با راه‌اندازی و اولین استفاده از سامانه مدیریت هوشمند آبیاری وب‌کشت آشنا شوید و کار خود را شروع کنید.
 ---
+<script>
+// ایجاد overlay برای نمایش تمام صفحه
+document.addEventListener('DOMContentLoaded', function() {
+    // ایجاد المان overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'image-fullscreen-overlay';
+    overlay.innerHTML = '<div class="fullscreen-close-btn">✕</div>';
+    document.body.appendChild(overlay);
+
+    // انتخاب تمام تصاویر داخل image-container
+    const images = document.querySelectorAll('.image-container img');
+    
+    images.forEach(img => {
+        img.addEventListener('click', function(e) {
+            e.stopPropagation();
+            
+            // ایجاد کپی از تصویر برای نمایش
+            const clonedImg = this.cloneNode(true);
+            clonedImg.style.cursor = 'zoom-out';
+            
+            // پاک کردن محتوای قبلی overlay
+            const existingImg = overlay.querySelector('img');
+            if (existingImg) {
+                existingImg.remove();
+            }
+            
+            // اضافه کردن تصویر جدید
+            overlay.appendChild(clonedImg);
+            overlay.classList.add('active');
+            
+            // غیرفعال کردن اسکرول
+            document.body.style.overflow = 'hidden';
+        });
+    });
+    
+    // بستن overlay با کلیک روی پس‌زمینه یا دکمه بستن
+    overlay.addEventListener('click', function() {
+        closeFullscreen();
+    });
+    
+    // بستن با کلید ESC
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && overlay.classList.contains('active')) {
+            closeFullscreen();
+        }
+    });
+    
+    function closeFullscreen() {
+        overlay.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        
+        // حذف تصویر پس از انیمیشن
+        setTimeout(() => {
+            const img = overlay.querySelector('img:not(.fullscreen-close-btn)');
+            if (img) img.remove();
+        }, 300);
+    }
+});
+</script>
 
 <div class="container">
+
     <div class="header">
-            <h1>🌱 راهنمای جامع سامانه مدیریت آبیاری وب‌کشت 💧</h1>
+            <h1>🌱 راهنمای شروع سریع سامانه مدیریت آبیاری وب‌کشت 💧</h1>
             <p>راهنمای کامل کار با سامانه هوشمند مدیریت آبیاری وب‌کشت - از ثبت‌نام تا مدیریت هوشمند آبیاری</p>
     </div>
 
 <div class="content">
+
             <p style="margin-bottom: 25px; text-align: justify; line-height: 1.8; font-size: 1.1em;">
                 به سامانه هوشمند مدیریت آبیاری وب‌کشت خوش آمدید. این راهنما شما را در فرآیند ثبت‌نام، ایجاد پروژه و تعریف پارامترهای اساسی یاری می‌کند.
             </p>
+
 </div>
 
-
 <!-- بخش اول: ثبت‌نام و ورود -->
-            <div class="main-section" >
-                <div class="section-header" onclick="toggleSection(this)" >
+ 
+<div class="main-section" >
+    <div class="section-header" onclick="toggleSection(this)"  >
                     <span> 👤 راهنمای ثبت‌نام و ورود به حساب کاربری</span>
                     <span class="section-icon">−</span>
                 </div>
@@ -27,8 +89,6 @@ description: در این راهنمای جامع، گام به گام با را�
                         <p style="margin-bottom: 20px; text-align: justify;">
                             برای استفاده از امکانات سامانه، ابتدا باید یک حساب کاربری ایجاد کنید.
                         </p>
-
-
                         <!-- زیربخش عضویت -->
                         <div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
@@ -49,7 +109,7 @@ description: در این راهنمای جامع، گام به گام با را�
                                             <div class="timeline-item">
                                                 <strong>مرحله 2:</strong> در صفحه اصلی، روی دکمه <strong>«ورود به سامانه»</strong> کلیک کنید.
 												<div class="image-container">
-                                                <img src="images/01.home.JPG" "alt="تصویر ورود به سامانه">
+                                                <img src="images/01.home.JPG"  alt="تصویر ورود به سامانه">
                                             </div>
                                             </div>
                                             <div class="timeline-item">
@@ -65,7 +125,6 @@ description: در این راهنمای جامع، گام به گام با را�
                                                     <li> <strong>رمز عبور:</strong> یک رمز عبور قوی با حداقل ۶ کاراکتر (شامل حروف بزرگ و کوچک انگلیسی، اعداد و نمادها) انتخاب کنید.</li>
 												</ul>
                                             </div>
-											
 											<div class="timeline-item">
                                                 <strong>مرحله 5:</strong> پس از تکمیل فرم، روی دکمه <strong>«ثبت‌نام»</strong> کلیک کنید.
 												<div class="image-container">
@@ -83,7 +142,6 @@ description: در این راهنمای جامع، گام به گام با را�
                                             <div class="image-container">
                                                  <img src="images/05.Email.JPG" alt="ایمیل تأیید">
                                             </div>
-                                            
 											</div>
 											<div class="timeline-item">
                                                 <strong>مرحله 8:</strong> پس از تأیید، شما به صفحه ورود بازگردانده می‌شوید و پیغام <span class="message-code">Your registration has been confirmed</span> نمایش داده می‌شود. ثبت‌نام شما با موفقیت به پایان رسیده است.
@@ -137,10 +195,11 @@ description: در این راهنمای جامع، گام به گام با را�
                 </div>
 				</div>
                 </div>
+
             <div class="separator"></div>
 
-
  <!-- بخش دوم: مدیریت پروژه‌ها -->
+
             <div class="main-section" >
                 <div class="section-header" onclick="toggleSection(this)">
                     <span>📁 راهنمای مدیریت پروژه‌ها</span>
@@ -308,6 +367,7 @@ description: در این راهنمای جامع، گام به گام با را�
                  </div>  
 
  						<!-- زیربخش انواع خاک -->
+
 						<div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
                                 <span>🌍 مدیریت انواع خاک (لیست خاک‌ها)</span>
@@ -390,8 +450,8 @@ description: در این راهنمای جامع، گام به گام با را�
 											</div>
 									
 
-
 <div class="sub-content">
+
                                      <div class="sub-body">
                                     <div class="note-box">
                                         <strong>📌 راهنمایی تکمیلی:</strong>
@@ -406,7 +466,6 @@ description: در این راهنمای جامع، گام به گام با را�
                                     </div>
                                 </div>
                             </div>
-
 
 											<div class="image-container">
                                         <img src="images/15.Vegetationlist.JPG" alt="مدیریت پوشش گیاهی">
@@ -425,6 +484,7 @@ description: در این راهنمای جامع، گام به گام با را�
             <div class="separator"></div>
 
  <!-- بخش چهارم: تعریف واحدهای مدیریتی -->
+
             <div class="main-section">
                 <div class="section-header" onclick="toggleSection(this)">
                     <span>🗺️ راهنمای تعریف واحدهای مدیریتی بر روی نقشه</span>
@@ -436,9 +496,8 @@ description: در این راهنمای جامع، گام به گام با را�
                             پس از تعریف پارامترهای پایه، نوبت به ترسیم محدوده‌های مدیریتی بر روی نقشه ماهواره‌ای می‌رسد.
                         </p>
 
-
-
 <!--  زیربخش ایجاد زیرواحد -->
+
                         <div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
                                 <span>🔷 ایجاد زیرواحد جدید (محدوده شیر برقی)</span>
@@ -500,10 +559,12 @@ description: در این راهنمای جامع، گام به گام با را�
                                     </div>
 								</div>
                          </div
+
 </div>
 </div>
 </div>
 <!-- زیربخش افزودن دستگاه -->
+
                         <div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
                                 <span>📡 افزودن دستگاه جدید (کنترلر IoT)</span>
@@ -562,8 +623,8 @@ description: در این راهنمای جامع، گام به گام با را�
 							</div>  		
 						</div>
 
-
 <!-- زیربخش اتصال زیرواحد -->
+
                         <div class="sub-section">
                             <div class="sub-header" onclick="toggleSubSection(this)">
                                 <span>🔗 اتصال زیرواحد به دستگاه</span>
@@ -601,6 +662,7 @@ description: در این راهنمای جامع، گام به گام با را�
 <div class="separator"></div>
 
 <!-- بخش پنجم: مدیریت هوشمند آبیاری -->
+
             <div class="main-section">
                 <div class="section-header" onclick="toggleSection(this)">
                     <span>🤖 راهنمای مدیریت هوشمند آبیاری</span>
@@ -609,7 +671,6 @@ description: در این راهنمای جامع، گام به گام با را�
                 <div class="section-content">
                     <div class="section-body">
                         <p style="margin-bottom: 20px; text-align: justify;">
-
 
                         پس از تعریف زیرواحدها و اتصال آن‌ها به دستگاه‌ها، می‌توانید نوع برنامه آبیاری را مشخص کنید. این تنظیمات از طریق گزینه <strong>مدیریت آبیاری</strong> در پنجره هر زیرواحد قابل دسترسی است.
                         </p>
@@ -653,7 +714,6 @@ description: در این راهنمای جامع، گام به گام با را�
                          </div>  
                                           
 
-
            
                                                             
                         <div class="highlight" style="margin-top: 25px;">
@@ -662,8 +722,4 @@ description: در این راهنمای جامع، گام به گام با را�
                     </div>
                 </div>
             </div>
-
         </div>
- 
-                        
-   
