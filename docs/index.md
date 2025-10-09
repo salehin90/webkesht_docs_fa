@@ -320,7 +320,7 @@ description: سامانه هوشمند مدیریت و آبیاری وب کشت 
 
 <div class="hero-actions" markdown="1">
 [🚀 ورود به سامانه](http://app.webkesht.com){ .md-button .md-button--primary }
-[📖 راهنمای شروع سریع](quick-start/){ .md-button }
+[📖 راهنمای شروع سریع](quick-start/Guide.md){ .md-button }
 </div>
 
 </div>
