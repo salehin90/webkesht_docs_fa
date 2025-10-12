@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
 							<div class="timeline-item">
                                                 <strong>مرحله 2:</strong> روی دکمه <strong> ورود </strong> کلیک کنید تا به پنل کاربری خود منتقل شوید.
 												<div class="image-container">
-                                                <img src="images/07.LoginForm.JPG" alt="صفحه ورود">
+                                                <img src="images/02.signin.JPG" alt="صفحه ورود">
                                             </div>
                               </div>
                             <div class="sub-content">
