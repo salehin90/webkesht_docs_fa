@@ -51,9 +51,9 @@ body, .md-typeset {
 }
 
 .hero-actions .md-button--primary {
-  background: rgba(255, 255, 255, 0.2);
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  color: white;
+  background: rgba(51, 221, 8, 0.315);
+  border: 2px solid rgba(243, 8, 8, 0.3);
+  color: rgb(28, 226, 10);
 }
 
 .hero-actions .md-button--primary:hover {
@@ -895,3 +895,4 @@ body, .md-typeset {
         margin: 0 0 20px 0;
     }
 }
+
