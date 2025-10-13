@@ -76,7 +76,7 @@ description:  معرفی سیستم های آبیاری و پارامترهای 
             <!-- بخش 2: شدت پخش -->
             <div class="main-section">
                 <div class="section-header" onclick="toggleSection(this)">
-                    <span>💦 شدت پخش گسیلنده‌ها (Application Rate)</span>
+                    <span>💦 شدت پخش گسیلنده‌ها (Precipitation Rate)</span>
                     <span class="section-icon">−</span>
                 </div>
                 <div class="section-content">
