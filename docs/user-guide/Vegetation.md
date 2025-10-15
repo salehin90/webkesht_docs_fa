@@ -678,13 +678,6 @@ description:  معرفی پارامترهای اساسی پوشش گیاهی ج�
                                     </tr>
                                     <tr>
                                         <td>63</td>
-                                        <td>یاس هلندی</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                        <td>-</td>
-                                    </tr>
-                                    <tr>
-                                        <td>64</td>
                                         <td>یوکا</td>
                                         <td>Yucca filamentosa</td>
                                         <td>L</td>
