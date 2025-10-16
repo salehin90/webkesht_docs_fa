@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </div>
 
                             <div class="image-container">
-													<img src="images/14.SoilList.JPG" alt="مدیریت سیستم‌های آبیاری">
+													<img src="images/14.SoilList.JPG" alt="مدیریت بافت خاک">
 												</div>
                                     </div>
 								</div>
